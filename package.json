@@ -15,7 +15,8 @@
     "assets/",
     "docs/",
     "cordis.patch.yml",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "THIRD-PARTY-NOTICES.md"
   ],
   "dsh": {
     "bundle": {

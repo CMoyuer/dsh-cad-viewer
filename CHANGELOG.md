@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **The README points at the npm package now.** Both install paths were GitHub-only before; the npm route (`dsh plugin --profile web add dsh-cad-viewer`) is now listed first, the package page is linked from the badge row, the link line and the intro note, and the install section spells out what the tarball contains (`dev/` is not published).
+- **`screenshots.json`.** The dsh market reads screenshots out of the repository; declaring them keeps the selection and the order under our control instead of leaving the storefront to guess from the README. Two entries, both already in `docs/images/`.
+- **An AI-generation notice.** The README states up front that the code and documentation were produced by an AI coding assistant, with the maintainer setting the requirements, reviewing the changes and deciding on releases. It is both a badge and a section.
+
+### Changed
+
+- **The README was rewritten around what a reader wants first.** Screenshots, what the plugin is and how to install it now come before everything else, and the document went from 522 to 284 lines: the table of contents, the long *why* narrative behind each feature and the full project-layout tree are gone, because that reasoning already lives in this changelog and in the code. Nothing actionable was dropped — every install command, route, config key, format name and troubleshooting row survives, re-checked as literal strings after the rewrite.
+- **`LICENSE` is plain MIT again, and `THIRD-PARTY-NOTICES.md` carries the notices.** The three-cad-viewer / three.js paragraph used to be glued to the end of the MIT text after a horizontal rule; GitHub's licensee cannot classify a LICENSE with extra prose appended and reported `NOASSERTION`, so the repository displayed no licence at all. Nothing is attributed less than before — the same notices were already in `assets/README.md` — and the new file ships in the npm tarball (`files`), so a consumer of the package still gets the attribution alongside the vendored bundle.
 
 ### Fixed
 
