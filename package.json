@@ -1,0 +1,48 @@
+{
+  "name": "dsh-model-viewer",
+  "version": "0.1.0",
+  "description": "dsh plugin: a 3D model library and a three-cad-viewer workbench in a '3D模型' tab, plus inline model cards and CadQuery agent tools. Models are stored server-side, so the library is shared across devices.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale"
+      ],
+      "platform": "web"
+    }
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "three-cad-viewer",
+    "cadquery",
+    "cad",
+    "3d",
+    "viewer",
+    "webgl"
+  ],
+  "author": "CMoyuer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CMoyuer/dsh-3dmodel-viewer.git"
+  },
+  "homepage": "https://github.com/CMoyuer/dsh-3dmodel-viewer#readme",
+  "bugs": {
+    "url": "https://github.com/CMoyuer/dsh-3dmodel-viewer/issues"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-tools": "0.1.1-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  }
+}

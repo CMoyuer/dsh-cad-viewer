@@ -1,0 +1,16 @@
+# Normalise line endings: LF in the repository and in the working tree, on
+# every platform. Use `eol=crlf` on a pattern if a file ever needs it.
+* text=auto eol=lf
+
+# Vendored prebuilt bundle: minified, single-line, never diff it.
+assets/three-cad-viewer.esm.min.js -text -diff
+
+# Binary-ish assets, if any are added later.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary

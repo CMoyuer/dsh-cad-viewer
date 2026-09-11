@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Plugin data — the model library is user data (one JSON per model plus
+# folders.meta.json). Back it up; never commit it.
+data/
+data-backup-*/
+
+# Interrupted writes / logs
+*.json.tmp
+*.log
+
+# OS and editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Python (the CadQuery helper runs scripts with an external interpreter)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
