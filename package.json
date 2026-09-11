@@ -1,6 +1,6 @@
 {
   "name": "dsh-cad-viewer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "dsh plugin: a 3D model library and a three-cad-viewer workbench in a '3D模型' tab, plus inline model cards and CadQuery agent tools. Models are stored server-side, so the library is shared across devices.",
   "type": "module",
   "main": "lib/index.js",
