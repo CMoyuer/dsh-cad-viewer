@@ -11,16 +11,38 @@ The script.py must define `model` (a cq.Workplane / cq.Shape / anything with a
 doc is printed to stdout. On failure a JSON `{"ok":false,"error":...}` is
 printed and exit code is non-zero.
 
-Load order caveat: importing cadquery after `vtkmodules.vtkCommonDataModel`
-avoids an OCCT/VTK DLL conflict on this host, so do NOT reorder these imports.
+Load order caveat: importing cadquery after `vtkmodules.vtkCommonDataModel` avoids
+an OCCT/VTK DLL conflict on some Windows hosts, so the VTK import stays first.
+VTK itself is NOT required (CadQuery does not depend on it): only the plugin's VTP
+export needs it, so a missing VTK is tolerated here.
 """
 import sys
 import json
 import math
 
-# Bypass OCCT(OCP)/VTK DLL-load conflict: load the VTK common module first.
-import vtkmodules.vtkCommonDataModel  # noqa: F401
-import cadquery as cq  # noqa: F401
+# Bypass the OCCT(OCP)/VTK DLL-load conflict by loading the VTK common module
+# first — but only when VTK is installed, since CadQuery works fine without it.
+try:
+    import vtkmodules.vtkCommonDataModel  # noqa: F401
+except Exception:  # ImportError, or a broken VTK install: cadquery is next anyway
+    pass
+try:
+    import cadquery as cq  # noqa: F401
+except Exception as _cq_error:  # noqa: BLE001 - reported as JSON, never a traceback
+    # The caller (build_3dmodel) reports this to the agent, so the message must
+    # carry the remedy rather than a stack trace.
+    print(
+        json.dumps(
+            {
+                "ok": False,
+                "error": "CadQuery 不可用（解释器：%s）：%s。安装：`\"%s\" -m pip install cadquery vtk`"
+                "（cadquery 2.4 的 exporters 在导入期会 import vtkmodules，而官方依赖表未声明 vtk），"
+                "然后把插件配置 cadqueryPython 指向这个解释器。"
+                % (sys.executable, _cq_error, sys.executable)
+            }
+        )
+    )
+    sys.exit(4)
 
 
 def _norm(v):
