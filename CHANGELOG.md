@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.1] - 2026-09-11
 
+### Added
+
+- **The README points at the npm package now.** Both install paths were GitHub-only before; the npm route (`dsh plugin --profile web add dsh-cad-viewer`) is now listed first, the package page is linked from the badge row, the link line and the intro note, and the install section spells out what the tarball contains (`dev/` is not published).
+
 ### Fixed
 
 - **README screenshots are absolute URLs now.** `docs/images/*.png` were referenced relatively, which renders on GitHub but not on the npm package page: npm does not rewrite relative image paths, so both screenshots were broken there. They now point at `raw.githubusercontent.com`.

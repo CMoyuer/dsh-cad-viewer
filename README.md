@@ -2,15 +2,17 @@
 
 把 **3D 模型库**和完整的 CAD 查看器嵌入 [dsh](https://github.com/deepseek-ai/deepseek-harness) Web GUI，作为会话区的 **「3D模型」tab**；同时注册三个工具，让 agent 用 **CadQuery** 建模并直接入库。
 
+[![npm](https://img.shields.io/npm/v/dsh-cad-viewer)](https://www.npmjs.com/package/dsh-cad-viewer)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-cad-viewer)](https://www.npmjs.com/package/dsh-cad-viewer)
 [![License](https://img.shields.io/github/license/CMoyuer/dsh-cad-viewer)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/CMoyuer/dsh-cad-viewer)](https://github.com/CMoyuer/dsh-cad-viewer/stargazers)
 [![Issues](https://img.shields.io/github/issues/CMoyuer/dsh-cad-viewer)](https://github.com/CMoyuer/dsh-cad-viewer/issues)
 ![Platform](https://img.shields.io/badge/platform-dsh%20web-3b82f6)
 ![Node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 
-[更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
+[npm 包页](https://www.npmjs.com/package/dsh-cad-viewer) · [更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
 
-> GitHub 仓库名与 npm 包名都是 `dsh-cad-viewer`；dsh 插件 id 是 `cad-viewer`（见 `cordis.patch.yml`）。0.1.0 之前本插件叫 `dsh-model-viewer` / `model-viewer`——升级已有安装请看[更新日志](CHANGELOG.md)。
+> GitHub 仓库与 npm 包都叫 `dsh-cad-viewer`（<https://www.npmjs.com/package/dsh-cad-viewer>），dsh 插件 id 是 `cad-viewer`（见 `cordis.patch.yml`）。0.1.0 之前本插件叫 `dsh-model-viewer` / `model-viewer`——升级已有安装请看[更新日志](CHANGELOG.md)。
 
 ---
 
@@ -109,6 +111,16 @@
 本插件没有构建步骤，也没有 `prepare` 脚本，因此从 git 安装不需要在 pnpm 的 `allowBuilds` 里放行任何构建。
 
 ## 安装
+
+三条路等价，按省事程度排列；装完都要做下面的[启用与验证](#启用与验证)。
+
+### 从 npm 安装（推荐）
+
+```bash
+dsh plugin --profile web add dsh-cad-viewer
+```
+
+包页：<https://www.npmjs.com/package/dsh-cad-viewer>。包里的内容和仓库里的源码一致——`assets/` 中的 three-cad-viewer 构建产物随包分发，没有构建步骤——但只含运行所需的文件：`lib/`、`assets/`、`docs/`、`cordis.patch.yml`、`CHANGELOG.md`，加上 npm 必定包含的 `package.json`、`README.md`、`LICENSE`；`dev/` 下的开发脚本不随包分发。
 
 ### 从 GitHub 安装
 
