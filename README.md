@@ -1,6 +1,6 @@
 # dsh-cad-viewer
 
-A 3D model library and a full CAD viewer, embedded in the [dsh](https://github.com/deepseek-ai/deepseek-harness) web GUI as a **"3D模型"** tab — plus two agent tools that build geometry with **CadQuery** and drop it straight into the library.
+把 **3D 模型库**和完整的 CAD 查看器嵌入 [dsh](https://github.com/deepseek-ai/deepseek-harness) Web GUI，作为会话区的 **「3D模型」tab**；同时注册三个工具，让 agent 用 **CadQuery** 建模并直接入库。
 
 [![License](https://img.shields.io/github/license/CMoyuer/dsh-cad-viewer)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/CMoyuer/dsh-cad-viewer)](https://github.com/CMoyuer/dsh-cad-viewer/stargazers)
@@ -8,234 +8,234 @@ A 3D model library and a full CAD viewer, embedded in the [dsh](https://github.c
 ![Platform](https://img.shields.io/badge/platform-dsh%20web-3b82f6)
 ![Node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 
-[中文文档](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)
+[更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
 
-> The GitHub repository and the npm package are both `dsh-cad-viewer`; the dsh plugin id is `cad-viewer` (`cordis.patch.yml`). The plugin was called `dsh-model-viewer` / `model-viewer` up to 0.1.0 — see the [changelog](CHANGELOG.md) if you are upgrading an existing install.
+> GitHub 仓库名与 npm 包名都是 `dsh-cad-viewer`；dsh 插件 id 是 `cad-viewer`（见 `cordis.patch.yml`）。0.1.0 之前本插件叫 `dsh-model-viewer` / `model-viewer`——升级已有安装请看[更新日志](CHANGELOG.md)。
 
 ---
 
-## Table of contents
+## 目录
 
-- [What it does](#what-it-does)
-- [Screenshots](#screenshots)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Using the plugin](#using-the-plugin)
-- [Agent tools](#agent-tools)
-- [CadQuery modeling](#cadquery-modeling)
-- [Installing CadQuery (the agent does it)](#installing-cadquery-the-agent-does-it)
+- [功能概览](#功能概览)
+- [截图](#截图)
+- [特性](#特性)
+- [环境要求](#环境要求)
+- [安装](#安装)
+- [使用](#使用)
+- [Agent 工具](#agent-工具)
+- [CadQuery 建模](#cadquery-建模)
+- [CadQuery 安装（由 agent 执行）](#cadquery-安装由-agent-执行)
 - [HTTP API](#http-api)
-- [Configuration](#configuration)
-- [Data and storage](#data-and-storage)
-- [Project layout](#project-layout)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
-- [Third-party notices](#third-party-notices)
-- [License](#license)
+- [配置项](#配置项)
+- [数据与存储](#数据与存储)
+- [目录结构](#目录结构)
+- [开发](#开发)
+- [常见问题](#常见问题)
+- [第三方声明](#第三方声明)
+- [许可证](#许可证)
 
-## What it does
+## 功能概览
 
-The plugin adds a **3D模型** tab to the dsh conversation view. The tab holds:
+插件在 dsh 会话区新增一个 **3D模型** tab，里面有：
 
-- a **model library** — folders, library-wide search, drag & drop, rename/move/delete, and **export** in all 10 formats CadQuery can write;
-- a **workbench** — the upstream [three-cad-viewer](https://github.com/bernhard-42/three-cad-viewer) UI (toolbar, navigation tree, canvas) mounted for any model in the library.
+- **模型库** —— 文件夹、全库搜索、拖拽移动、重命名 / 移动 / 删除 / **导出**（CadQuery 支持的全部 10 种格式）；
+- **工作台** —— 为模型库中任意模型挂载上游 [three-cad-viewer](https://github.com/bernhard-42/three-cad-viewer) 的完整界面（工具栏 + 导航树 + 画布）。
 
-Models are stored as one JSON file per entry on the dsh server, so the same library appears on **every device and browser** that opens the same dsh instance. There is no IndexedDB, no external service and no build step: the three-cad-viewer bundle is vendored in `assets/` and served by the plugin itself.
+模型以「一个条目一个 JSON 文件」的形式存放在 dsh 服务端磁盘上，因此**同一 dsh 实例下的任何设备、任何浏览器看到的都是同一份模型库**：不用 IndexedDB，不依赖外部服务，也没有构建步骤（three-cad-viewer 构建产物随插件 `assets/` 一起分发，由插件自己托管）。
 
-Three tools are registered for the agent:
+注册给 agent 的三个工具：
 
-| Tool | Purpose |
+| 工具 | 作用 |
 |---|---|
-| `add_3dmodel` | Persist a three-cad-viewer `Shape` (cad-format JSON) and show it as an inline card. |
-| `build_3dmodel` | Run a CadQuery script, tessellate the solid, persist the result. |
-| `cadquery_env` | Read-only probe of the CadQuery environment (is the interpreter there, do cadquery / OCP / VTK / ezdxf import) plus the exact command that fixes what is missing. CadQuery is not bundled, so installing it is the agent's job — see [Installing CadQuery](#installing-cadquery-the-agent-does-it). |
+| `add_3dmodel` | 把一段 three-cad-viewer `Shape`（cad-format JSON）存入模型库，并在消息尾部渲染内嵌卡片。 |
+| `build_3dmodel` | 运行 CadQuery 脚本，tessellate 后入库。 |
+| `cadquery_env` | 只读探测 CadQuery 环境（解释器是否在、cadquery/OCP/VTK/ezdxf 是否能导入），并给出补齐缺口的准确命令。CadQuery 不随插件分发，安装由 agent 按它执行（见 [CadQuery 安装](#cadquery-安装由-agent-执行)）。 |
 
-## Screenshots
+## 截图
 
-**Model library** — the tab's default view, here with three models also open as workbench tabs in the strip beside it. The `⋯` menu is open on `长方体 3×10×3 mm` and its **导出** flyout lists all ten formats. That entry came from `add_3dmodel` and kept no script, so the flyout header reads *仅有网格 · 由三角网格重建几何*; an entry created by `build_3dmodel` reads *已保存 CadQuery 源码 · 导出为精确几何* instead.
+**模型库** —— tab 的默认视图。图中旁边还开着三个工作台 tab；`长方体 3×10×3 mm` 卡片上打开了 `⋯` 菜单，**导出**子菜单列出全部 10 种格式。该条目由 `add_3dmodel` 创建、没有保存脚本，所以子菜单头部显示「仅有网格 · 由三角网格重建几何」；由 `build_3dmodel` 创建的条目则显示「已保存 CadQuery 源码 · 导出为精确几何」。
 
-![The 3D模型 tab: the model library, a card menu open on a model, and the export flyout listing STEP, BREP, STL, 3MF, AMF, VRML, VTP, TJS, SVG and DXF](docs/images/model-library.png)
+![「3D模型」tab：模型库、模型卡片上打开的菜单，以及列出 STEP / BREP / STL / 3MF / AMF / VRML / VTP / TJS / SVG / DXF 的导出子菜单](docs/images/model-library.png)
 
-**Workbench** — a stored model opened in its own tab: the three-cad-viewer toolbar and navigation tree on the left, the plugin's **导出** button immediately before the `?` help button, and the canvas with the viewer's own status box and Z slider.
+**工作台** —— 入库的模型在独立 tab 中打开：左侧是 three-cad-viewer 的工具栏与导航树，工具栏里 **导出** 按钮紧挨在 `?` 帮助按钮之前，右侧是画布（含查看器自带的状态框与 Z 轴滑块）。
 
-![A model open in a workbench tab: the viewer toolbar, the navigation tree panel and the 3D canvas](docs/images/workbench.png)
+![在工作台 tab 中打开的模型：查看器工具栏、导航树面板与 3D 画布](docs/images/workbench.png)
 
-## Features
+## 特性
 
-**Model library (the tab's default view)**
+**模型库（tab 的默认视图）**
 
-- Folder navigation: clicking a folder card scopes the grid to that folder, and folders nest freely. While inside a folder a small location strip shows its name (e.g. `零件 /`) and the *返回上一级* card in the grid goes one level up.
-- Library-wide search (placeholder `搜索模型、文件夹…`): a hit inside a folder shows the folder path on the card, and opening it leaves search.
-- Folder cards and model cards in a responsive grid; the empty state explains how to get content in.
-- Per-card `⋯` menu (right-clicking the card opens the same menu): **重命名 / 移动到… / 导出 ▸ / 删除**. A **right-click opens it at the pointer** (another right-click moves it there; it is clamped into the viewport), while the `⋯` button anchors it under the button — above it when there is no room below. It closes on scrolling the grid, a click elsewhere, or Esc. Double-clicking a card name renames it in place.
-- The **导出** submenu opens on hover (a tap works too, for touch), listing every format CadQuery can write (STEP / BREP / STL / 3MF / AMF / VRML / VTP / TJS / SVG / DXF) grouped as *精确几何 / 网格 / 二维图纸*; its header states whether the entry exports **exact geometry** (its CadQuery source was kept) or is **rebuilt from the triangle mesh**. See [Export](#export).
-- 移动到… switches the grid into pick mode (a hint bar reads `把「…」移动到：`) — click a folder card or 返回上一级 as the destination, or 取消.
-- Drag & drop to move models and folders. Mouse drag uses the HTML5 drag events; on touch devices a long press starts a drag with a floating copy, and *返回上一级* doubles as a drop target to move something up one level.
-- Right-click on blank space: **新建文件夹 / 刷新**. That menu only appears **inside the model-library panel** and is clamped to it (it never spills over the tab strip or the workbench); right-clicking outside the panel, or on a field such as the search box, is left to the browser's own menu. Right-clicking a card dismisses it, since a card menu and the blank-space menu never show at once.
-- Deleting a folder never deletes content: its models and child folders move up to the deleted folder's parent.
+- 文件夹导航：点击文件夹卡片即把网格限定到该文件夹，文件夹可自由嵌套。进入文件夹后顶部会显示位置条（如 `零件 /`），网格里的 *返回上一级* 卡片用于回到上一层。
+- 全库搜索（占位符 `搜索模型、文件夹…`）：命中的模型会显示其所在文件夹路径，进入文件夹会自动退出搜索。
+- 文件夹卡片与模型卡片组成自适应网格，空目录有空状态提示。
+- 每张卡片的 `⋯` 菜单（右键卡片等效）：**重命名 / 移动到… / 导出 ▸ / 删除**；**右键时菜单在鼠标位置弹出**（再次右键会跟着鼠标移动，超出视口会自动收回边界内），点 `⋯` 则贴在按钮下方（下方放不下时翻到上方）。菜单在滚动网格、点击别处或按 Esc 时关闭；双击卡片名称可原地重命名。
+- **导出**子菜单：鼠标移到「导出」上即弹出（触屏点一下同样弹出），列出 CadQuery 能写出的全部格式（STEP / BREP / STL / 3MF / AMF / VRML / VTP / TJS / SVG / DXF），按「精确几何 / 网格 / 二维图纸」分组；子菜单顶部会说明该条目是**精确几何**（保存过 CadQuery 源码）还是**由三角网格重建**。详见[导出](#导出)。
+- 「移动到…」会把网格切进选择模式（提示条显示 `把「…」移动到：`）：点一个文件夹卡片或「返回上一级」作为目标，或点「取消」。
+- 拖拽移动模型与文件夹：鼠标走 HTML5 拖拽事件；触屏设备长按开始拖拽（带浮动副本），*返回上一级* 同时是「上移一层」的放置目标。
+- 网格空白处右键：**新建文件夹 / 刷新**。这个菜单只在**模型库面板范围内**出现，并会被夹在面板内（不会盖到 tab 条或工作台上）；面板之外、以及搜索框等输入控件上右键不拦截，仍旧使用浏览器自己的菜单。右键卡片时它会自动收起（卡片菜单与空白菜单互斥）。
+- 删除文件夹**不会删除内容**：其中的模型与子文件夹会上移到被删文件夹的父级。
 
-**Workbench**
+**工作台**
 
-- One tab per opened model; every tab can be closed individually (`×`). The active tab and the library share one tab strip.
-- Full upstream three-cad-viewer UI: toolbar (view, clipping, measurement, materials, environment, zebra, …), left navigation tree and canvas.
-- Rotate with the left or right mouse button, pan with the middle button, zoom with the wheel.
-- The layout is pure CSS (flex + `100%`), with no JS size listeners fighting the viewer; a `ResizeObserver` only re-fits the CAD view.
-- The upstream *Pin as PNG* toolbar button is hidden — this panel is for viewing models, not exporting screenshots.
-- An **导出** icon button sits just before the help (`?`) button (it is what replaces *Pin as PNG* for exporting models). It reuses the viewer's own button structure (`tcv_tooltip` + `tcv_button_frame` + `tcv_btn`), so its size, hover highlight and tooltip match the other buttons exactly; only the icon is ours — a download arrow into a tray, drawn in the viewer's palette (`#444` outlines, `rgb(83,160,227)` blue). It opens the **exact same** format submenu the library cards use, exporting the model open in that tab. It is re-placed in front of help if the viewer rebuilds its toolbar, and the CAD view re-fits when it wraps the toolbar onto a second row.
-- The viewer's hard-coded English UI (labels, tooltips, help table, `<select>` options) is translated to Chinese at runtime by walking the rendered DOM.
-- While the tab is mounted, dsh's column-width drag handles are hidden so they cannot be grabbed through the canvas.
+- 每打开一个模型就新增一个标签，每个标签可单独关闭（`×`）；标签条与模型库共用一个区域。
+- three-cad-viewer 完整原生界面：工具栏（视图、剖切、测量、材质、环境、斑马纹……）、左侧导航树、大画布。
+- 左键 / 右键旋转、中键平移、滚轮缩放。
+- 布局为纯 CSS（flex + `100%`），不与查看器的内联尺寸打架；尺寸变化只用 `ResizeObserver` 重新贴合视图。
+- 上游工具栏的 *Pin as PNG*（截图固定）按钮被隐藏——这个面板用于查看模型，不用于导出截图。
+- 工具栏上多了一个 **导出** 图标按钮，位置在帮助（`?`）按钮之前（模型导出改用它）：它用的是查看器自己的按钮结构（`tcv_tooltip` + `tcv_button_frame` + `tcv_btn`），因此尺寸、悬停高亮、tooltip 与其它按钮完全一致，只有图标是本插件画的——一枚「箭头入托盘」的图标，配色沿用查看器的 `#444` 描边 + `rgb(83,160,227)` 蓝。点开的格式子菜单与模型库卡片上的**完全一致**，导出的是当前标签页里打开的那个模型。查看器重建工具栏后会重新插回原位；按钮让工具栏换行时画布会重新贴合。
+- 查看器硬编码的英文界面（标签、tooltip、帮助表、`<select>` 选项）在运行时遍历 DOM 翻译成中文。
+- tab 挂载期间隐藏 dsh 的列宽拖拽手柄，避免透过画布误抓。
 
-**Inline cards in the conversation**
+**对话内嵌卡片**
 
-- A message whose turn called `add_3dmodel` or `build_3dmodel` gets a collapsible model card at its tail (`conversation.chat.turnTail`), with the title on the left and *收起* on the right.
-- The card's *全屏* button opens the same model as a workbench tab in the **3D模型** tab; if the tab is not mounted yet the request is queued and consumed on mount.
-- A failed load shows a retry action instead of hanging on "preparing".
+- 某轮对话调用过 `add_3dmodel` 或 `build_3dmodel` 时，该消息尾部出现可折叠的模型卡片（`conversation.chat.turnTail`）：左侧标题、右侧 *收起*。
+- 卡片上的 *全屏* 会在 **3D模型** tab 里以工作台打开同一模型；若 tab 尚未挂载，请求会排队并在挂载后消费。
+- 加载失败时显示重试入口，不会一直停在「准备中」。
 
-**Localisation**
+**多语言**
 
-- The tab label follows the dsh locale: `3D Model` when the active locale is English, `3D模型` otherwise.
-- All other UI text in the tab and cards is Chinese.
+- tab 标题跟随 dsh 语言：英文环境显示 `3D Model`，其余显示 `3D模型`。
+- tab 与卡片内的其他文案均为中文。
 
-## Requirements
+## 环境要求
 
 | | |
 |---|---|
-| dsh | A working dsh install with the `web` profile (`dsh web`) — developed against `@deepseek-ai/dsh` 0.1.5-rc.1. |
-| Node.js | 20 or newer (developed on Node 24). |
-| pnpm | On `PATH`: `dsh plugin` is a thin pnpm forwarder. |
-| CadQuery | **Only for `build_3dmodel` and for exporting.** A Python environment with `cadquery` installed. `add_3dmodel` needs nothing extra. CadQuery is Apache-2.0 and is **not bundled** — the agent installs it, see [Installing CadQuery](#installing-cadquery-the-agent-does-it) and the [third-party notices](#third-party-notices). |
+| dsh | 可用的 dsh 安装，且已初始化 `web` profile（`dsh web`）；开发环境为 `@deepseek-ai/dsh` 0.1.5-rc.1。 |
+| Node.js | 20 或更高（开发环境为 Node 24）。 |
+| pnpm | 需在 `PATH` 中：`dsh plugin` 本质是 pnpm 的转发器。 |
+| CadQuery | **仅 `build_3dmodel` 与导出需要**：一个装好 `cadquery` 的 Python 环境。`add_3dmodel` 无额外依赖。CadQuery 以 Apache-2.0 发布、**不随本插件分发**，安装由 agent 执行——见 [CadQuery 安装](#cadquery-安装由-agent-执行) 与[第三方声明](#第三方声明)。 |
 
-There is no build step and no `prepare` script, so installing from git needs no pnpm `allowBuilds` entry.
+本插件没有构建步骤，也没有 `prepare` 脚本，因此从 git 安装不需要在 pnpm 的 `allowBuilds` 里放行任何构建。
 
-## Installation
+## 安装
 
-### From GitHub
+### 从 GitHub 安装
 
 ```bash
 dsh plugin --profile web add github:CMoyuer/dsh-cad-viewer
 ```
 
-### From a local checkout
+### 从本地目录安装
 
 ```bash
 git clone https://github.com/CMoyuer/dsh-cad-viewer.git
 cd dsh-cad-viewer
-pnpm install          # the plugin resolves its own deps from its own node_modules
+pnpm install          # 插件从自己的 node_modules 解析依赖
 dsh plugin --profile web add .
 ```
 
-`dsh plugin add` runs pnpm inside the profile directory and then reconciles `dsh.profile.bundles` against what is actually installed, so a package that declares `dsh.bundle` joins the layer stack **automatically** — there is nothing to edit by hand. Use an absolute path (or run the command from the checkout, as above) if the plugin lives outside the profile.
+`dsh plugin add` 会在 profile 目录里执行 pnpm，然后按**实际安装结果**校正 `dsh.profile.bundles`——声明了 `dsh.bundle` 的包会自动加入插件层，**无需手工编辑**。插件目录若不在 profile 下，请使用绝对路径（或像上面这样在插件目录里执行命令）。
 
-### Enable and verify
+### 启用与验证
 
-Restart dsh web (server-side plugins are only loaded at boot), then check that both routes answer with the plugin's own content type:
+服务端插件只在启动时加载，改完需要**重启 dsh web**。随后确认两条路由返回的是插件自己的 content-type：
 
 ```bash
-dsh --profile web --dump-config                       # the tree should contain id: cad-viewer
+dsh --profile web --dump-config                       # 组合树中应出现 id: cad-viewer
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://127.0.0.1:3080/3dmodel/api/items
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://127.0.0.1:3080/tcv/three-cad-viewer.esm.min.js
 ```
 
-Expected: `200 application/json; charset=utf-8` and `200 text/javascript; charset=utf-8`. A missing route is **not** a 404 — dsh's SPA fallback answers `200 text/html`, so always check the content type.
+期望结果：`200 application/json; charset=utf-8` 与 `200 text/javascript; charset=utf-8`。路由缺失时**不是 404**——dsh 的 SPA fallback 会返回 `200 text/html`，所以务必看 content-type，而不是只看状态码。
 
-Then reload the GUI and open the **3D模型** tab (it sits directly after the gallery tab).
+然后刷新 GUI，打开 **3D模型** tab（位于「画廊」tab 之后）。
 
-## Using the plugin
+## 使用
 
-### Model library
+### 模型库
 
-Open the tab; the library is the default view. Models created by the agent (`add_3dmodel`, `build_3dmodel`) appear here immediately, ordered by creation time. Click a card to open that model in a new workbench tab.
+打开 tab 即为模型库。agent 通过 `add_3dmodel` / `build_3dmodel` 生成的模型会立刻出现在这里（按创建时间排序）。点击卡片即在工作台新标签中打开该模型。
 
-| Action | How |
+| 操作 | 方式 |
 |---|---|
-| Open a model | Click its card |
-| Rename | Double-click the name, or `⋯` → 重命名 |
-| Move | Drag the card onto a folder (or 返回上一级), or `⋯` → 移动到… |
-| Export | `⋯` → hover 导出 (or right-click the card and hover / tap it), then pick a format |
-| Delete | `⋯` → 删除 |
-| New folder | Right-click blank space inside the library panel → 新建文件夹 (right-clicking a card dismisses it) |
-| Search | Type in the search field (searches the whole library) |
-| Go up one level | The 返回上一级 card, or drag a card onto it |
+| 打开模型 | 点击卡片 |
+| 重命名 | 双击名称，或 `⋯` → 重命名 |
+| 移动 | 把卡片拖到目标文件夹（或「返回上一级」），或 `⋯` → 移动到… |
+| 导出 | `⋯` → 把鼠标移到「导出」上（或右键卡片后悬停 / 点击），再选格式 |
+| 删除 | `⋯` → 删除 |
+| 新建文件夹 | 在模型库面板空白处右键 → 新建文件夹（右键卡片会自动收起这个菜单） |
+| 搜索 | 使用搜索框（搜索整个模型库） |
+| 返回上一层 | 点击「返回上一级」卡片，或把卡片拖到它上面 |
 
-### Export
+### 导出
 
-Right-click a model card (or use its `⋯` menu) and hover **导出**: the submenu appears to the **right** of the card menu, aligned with the 导出 row (flipping to the left when the right side has no room). On touch devices a tap opens it instead, and either way the **card menu stays open**, so 重命名 / 移动到… / 删除 remain reachable. Moving onto any other menu entry or leaving the menu area hides the submenu immediately — crossing over to the flyout itself does not flicker — and so do Esc and a click elsewhere. Picking a format starts the download and closes both menus, named after the entry's title.
+右键模型卡片（或点卡片上的 `⋯`），把鼠标移到 **导出** 上，子菜单即出现在菜单**右侧**并与「导出」对齐（右侧空间不足时自动翻到左侧）；触屏点一下「导出」同样弹出，而且**父菜单保持打开**，随时可以回到重命名 / 移动到… / 删除。鼠标移到菜单里的其它选项或移出菜单范围，子菜单立即隐藏（跨到子菜单上去时不会闪），按 Esc、点别处也会收起。选一个格式即开始下载（此时两层菜单一起收起），文件名取自条目标题，扩展名随格式。
 
-**The same export entry lives in the workbench**: the **导出** icon button before the `?` help button opens the identical format submenu for the model in that tab (clicking the button again closes it).
+**同一个导出入口也在工作台里**：查看器工具栏上的 **导出** 图标按钮（位于 `?` 帮助按钮之前）弹出的是同一个格式子菜单（列表完全一致），导出的就是该标签页里打开的模型；再点一次按钮可以关掉子菜单。
 
-| Group | Format | Notes |
+| 分组 | 格式 | 说明 |
 |---|---|---|
-| Exact geometry | `STEP` `.step` | AP214 solid, the common CAD exchange format |
-| Exact geometry | `BREP` `.brep` | Native OCCT B-Rep |
-| Mesh | `STL` `.stl` | Binary triangle mesh, 3D printing |
-| Mesh | `3MF` `.3mf` | 3D manufacturing format |
-| Mesh | `AMF` `.amf` | Additive manufacturing format |
-| Mesh | `VRML` `.wrl` | Virtual Reality Modeling Language |
-| Mesh | `VTP` `.vtp` | VTK XML PolyData |
-| Mesh | `TJS` `.json` | three.js JSON mesh |
-| Drawings | `SVG` `.svg` | Projected 2D drawing |
-| Drawings | `DXF` `.dxf` | 2D drawing, CAD exchange |
+| 精确几何 | `STEP` `.step` | AP214 实体，通用 CAD 交换格式 |
+| 精确几何 | `BREP` `.brep` | OCCT 原生 B-Rep |
+| 网格 | `STL` `.stl` | 二进制三角网格，3D 打印 |
+| 网格 | `3MF` `.3mf` | 3D 制造格式 |
+| 网格 | `AMF` `.amf` | 增材制造格式 |
+| 网格 | `VRML` `.wrl` | 虚拟现实建模语言 |
+| 网格 | `VTP` `.vtp` | VTK XML PolyData |
+| 网格 | `TJS` `.json` | three.js JSON 网格 |
+| 二维图纸 | `SVG` `.svg` | 二维投影图纸 |
+| 二维图纸 | `DXF` `.dxf` | 二维图纸，CAD 交换 |
 
-The export runs server-side in `lib/cadquery_export.py` with the interpreter from `cadqueryPython`. What the file contains depends on the entry:
+导出由 `lib/cadquery_export.py` 在服务端用 `cadqueryPython` 指定的解释器完成，几何来源取决于条目：
 
-- **Entries that kept their CadQuery source** (created by `build_3dmodel`): the script is re-run and handed to CadQuery's own exporters, so STEP/BREP are real solids (correct volume, real cylindrical faces) and small. The submenu header reads *已保存 CadQuery 源码 · 导出为精确几何*.
-- **Mesh-only entries** (created by `add_3dmodel`, or stored by an older build): the stored triangles are reconstructed, and the header reads *仅有网格 · 由三角网格重建几何*:
-  - `STEP` / `BREP`: each triangle becomes a planar face and the faces are sewn into a shell (a solid when it closes). CAD systems open it, but the surface is **faceted** and the file is large (≈10k triangles → a ~20 MB STEP).
-  - `STL` / `3MF` / `AMF` / `VRML` / `VTP` / `TJS`: the mesh is attached to OCCT faces and given to CadQuery's exporters, so the file carries exactly the triangles shown in the viewer.
-  - `DXF`: a 2D projection of those planar faces.
-  - `SVG`: projected **silhouette + feature edges** (no hidden-line removal — HLR over a triangle soup is impractically slow, minutes for ~10k faces), so a mesh-only SVG has no dashed hidden lines.
+- **保存过 CadQuery 源码的条目**（`build_3dmodel` 创建）——重新执行脚本，再交给 CadQuery 自己的 exporter。STEP/BREP 是真正的实体（体积、圆柱面都正确），文件也小。子菜单顶部显示 *已保存 CadQuery 源码 · 导出为精确几何*。
+- **只有网格的条目**（`add_3dmodel` 创建，或旧版本入库的）——由存储的三角网格重建，子菜单顶部显示 *仅有网格 · 由三角网格重建几何*：
+  - `STEP` / `BREP`：每个三角面做成一个平面片，缝合成壳（闭合时成为实体）。能被 CAD 打开，但**表面是面片化的**，文件也大（约 1 万个三角面 → 20 MB 左右 STEP）。
+  - `STL` / `3MF` / `AMF` / `VRML` / `VTP` / `TJS`：把网格挂到 OCCT 面上直接交给 CadQuery 的 exporter，因此导出结果与查看器里看到的三角形完全一致。
+  - `DXF`：由这些平面片生成二维投影。
+  - `SVG`：由**轮廓 + 特征边**投影而成（不做隐藏线消除——对三角面汤做 HLR 会非常慢，约 1 万个面已经要几分钟），因此网格条目的 SVG 没有虚线隐藏线。
 
-Exports run one at a time on the server; the UI shows a progress dialog you can dismiss with *后台继续* while the download still completes. A ~10k-triangle mesh takes a few seconds for STEP/BREP, and the server caps one export at `cadqueryExportTimeout` (5 minutes by default).
+导出在服务端串行执行：一次一个请求，界面会显示进度对话框（可点「后台继续」关掉，下载仍会完成）。约 1 万个三角面的网格导出 STEP/BREP 需要数秒，更大的模型请留出时间；服务端单次导出上限由 `cadqueryExportTimeout`（默认 5 分钟）控制。
 
-### Workbench
+### 工作台
 
-Each opened model becomes a tab in the strip at the top; the `×` on a tab closes it and returns to the library. The canvas fills the panel; the viewer's own toolbar and navigation tree behave exactly as upstream, except that the *Pin as PNG* button is removed, the UI text is Chinese, and an **导出** icon button sits before the `?` help button (styled like the viewer's own buttons; same format list as the library cards, exporting the model in that tab).
+每个打开的模型对应顶部标签条里的一个标签，点 `×` 关闭并回到模型库。画布铺满面板；查看器自身的工具栏与导航树与上游完全一致，区别只有：*Pin as PNG* 按钮被移除、界面文案为中文、工具栏上多了一个 **导出** 图标按钮（在 `?` 帮助按钮之前，风格与查看器其它按钮一致；格式列表与模型库卡片相同，导出当前这个模型）。
 
-### Inline card
+### 内嵌卡片
 
-Whenever a turn calls one of the model tools, the model also shows up as a card at the end of that message: the title on the left, *收起* to collapse it, *全屏* to open it as a workbench tab. The card renders the geometry carried by the tool call when it has it, and otherwise fetches the entry from the store (by id, then by title, then the newest entry), showing *重试* if nothing loads within a few seconds. Deleting an entry from the library therefore does not blank out a card that has already rendered, but a card without inline geometry can fall back to a different entry or fail on reload.
+只要某轮对话调用了模型工具，该消息末尾就会出现对应卡片：左侧标题，*收起* 折叠，*全屏* 以工作台打开。卡片优先直接渲染工具调用参数里携带的几何；没有几何时才回源查询条目（先按 id，再按标题，最后取最新条目），几秒内查不到会显示 *重试*。因此在模型库删除条目不会清空已经渲染出来的卡片，但没有内联几何的卡片在重新加载时可能回退到别的条目或加载失败。
 
-## Agent tools
+## Agent 工具
 
 ### `add_3dmodel`
 
 ```jsonc
 {
-  "model":  { /* three-cad-viewer Shape JSON — required */ },
-  "title":  "Bracket",   // optional; part of the de-duplication key
-  "height": 320           // optional; inline card canvas height in px
+  "model":  { /* three-cad-viewer Shape JSON，必填 */ },
+  "title":  "Bracket",   // 可选；参与去重键
+  "height": 320           // 可选；内嵌卡片画布高度（px）
 }
 ```
 
-The `model` value is a [three-cad-viewer `Shape`](https://github.com/bernhard-42/three-cad-viewer) document: `{ version, parts[] }`, where each part carries `shape: { vertices, triangles, normals, edges, … }` plus optional `name`, `color`, `alpha`. Adding the same geometry under the same title **updates the existing entry** instead of creating a duplicate (see [Data and storage](#data-and-storage)).
+`model` 是一份 [three-cad-viewer `Shape`](https://github.com/bernhard-42/three-cad-viewer) 文档：`{ version, parts[] }`，每个 part 带 `shape: { vertices, triangles, normals, edges, … }` 以及可选的 `name`、`color`、`alpha`。**相同几何 + 相同标题**再次调用只会更新原条目，不会重复入库（见[数据与存储](#数据与存储)）。
 
 ### `build_3dmodel`
 
 ```jsonc
 {
-  "script":    "import cadquery as cq\nmodel = cq.Workplane('XY').box(20, 20, 10)",  // required
-  "title":     "Box 20×20×10",  // optional
-  "tolerance": 0.1              // optional tessellation tolerance
+  "script":    "import cadquery as cq\nmodel = cq.Workplane('XY').box(20, 20, 10)",  // 必填
+  "title":     "Box 20×20×10",  // 可选
+  "tolerance": 0.1              // 可选，tessellation 容差
 }
 ```
 
-The script is written to a temp file and executed with the configured CadQuery interpreter; the resulting solid is tessellated into a `Shape` (smooth per-vertex normals, boundary edges, bounding box) and stored. A script that fails, or that never assigns `model`, returns `{ "ok": false, "error": … }` — the build is reported as a failure, not as an empty model. CadQuery is developed by the [CadQuery project](https://github.com/CadQuery/cadquery) and released under Apache-2.0; this plugin does not bundle it (see [Third-party notices](#third-party-notices)).
+脚本会写入临时文件并用配置的 CadQuery 解释器执行；生成的实体被 tessellate 成 `Shape`（逐顶点平滑法线、边界边、包围盒）后入库。脚本报错或没有给 `model` 赋值时返回 `{ "ok": false, "error": … }`——失败会如实报告为失败，而不是入库一个空模型。CadQuery 由 [CadQuery 项目](https://github.com/CadQuery/cadquery)开发并以 Apache-2.0 发布，本插件不随包分发它（见[第三方声明](#第三方声明)）。
 
-Behaviour worth knowing:
+几点值得知道的行为：
 
-- **The script is kept with the entry** (`script`, capped at 256 KB). Such an entry can therefore be exported from the model library via **导出 ▸** by re-running the script, which yields **exact geometry** in every format CadQuery writes (STEP/BREP as real solids); `hasSource` in the list metadata is that flag. See [Export](#export).
-- **Units are CadQuery's own** (typically mm) — the plugin never converts; a `mm` in a title is just text.
-- **The de-duplication key is geometry + title**: the same geometry under the same title updates the existing entry (and refreshes the stored source) instead of adding a second one.
-- **One solid**: `model` must be a `cq.Workplane` / `cq.Shape`, i.e. anything with `.tessellate()`. An assembly has to be converted first, e.g. `model = assy.toCompound()`; assigning a `cq.Assembly` returns `{ "ok": false, "error": "tessellate error: …" }`.
+- **脚本会被保存进条目**（`script`，上限 256 KB）。因此这类条目在模型库里右键 **导出 ▸** 时能重跑脚本、输出**精确几何**（CadQuery 支持的全部 10 种格式，STEP/BREP 是真正的实体）；列表元数据里的 `hasSource` 就是它。详见[导出](#导出)。
+- **单位就是 CadQuery 的单位**（通常是 mm），插件不做换算；尺寸写在模型里，标题里的 `mm` 只是文字。
+- **去重键是「几何 + 标题」**：相同几何 + 相同标题再次调用只会更新原条目（并刷新保存的源码），不会产生第二条。
+- **单个实体**：`model` 必须是带 `.tessellate()` 的 `cq.Workplane` / `cq.Shape`。装配体需要先转换，例如 `model = assy.toCompound()`；直接赋一个 `cq.Assembly` 会返回 `{ "ok": false, "error": "tessellate error: …" }`。
 
-## CadQuery modeling
+## CadQuery 建模
 
-A `build_3dmodel` script is plain Python. Requirements:
+`build_3dmodel` 的脚本就是普通 Python，要求：
 
-- `import cadquery as cq` and assign **`model`** — a `cq.Workplane` or `cq.Shape` (anything with `.tessellate(tol)`); convert an assembly first with `model = assy.toCompound()`.
-- Optional module-level `name` (part name, default `Part`) and `color` (hex, default `#e8b024`).
-- Units are CadQuery's own (typically mm); the plugin does not convert.
+- `import cadquery as cq` 并给 **`model`** 赋值——`cq.Workplane` 或 `cq.Shape`（任何带 `.tessellate(tol)` 的对象）；装配体请先转换：`model = assy.toCompound()`；
+- 可选模块级 `name`（零件名，默认 `Part`）与 `color`（十六进制，默认 `#e8b024`）；
+- 单位就是 CadQuery 单位（通常 mm），插件不做换算。
 
 ```python
 import cadquery as cq
@@ -252,22 +252,22 @@ model = (
 )
 ```
 
-Details:
+细节：
 
-- The interpreter comes from `cadqueryPython` (default `D:\AI\3DModels\.venv\Scripts\python.exe` — **change it** for your machine); the runner is `lib/cadquery_build.py`.
-- Both scripts import `vtkmodules.vtkCommonDataModel` **before** `cadquery` to dodge the OCCT/VTK DLL-load conflict seen on Windows. That import is **tolerant**: a missing VTK does not fail there (CadQuery itself reports it — see the next section).
-- Build timeout is 60 s per invocation and stdout is capped at 64 MB, so keep the tessellation tolerance sane for large assemblies.
-- The generated document is written to the model store through the same path as `add_3dmodel`, so it appears in the library and as an inline card.
-- With no CadQuery installed, `build_3dmodel` and every export return an error that **carries the install command** instead of a stack trace — run what it says (details in [Installing CadQuery](#installing-cadquery-the-agent-does-it)).
+- 解释器由 `cadqueryPython` 指定（默认 `D:\AI\3DModels\.venv\Scripts\python.exe`，**请改成你机器上的路径**）；执行器是 `lib/cadquery_build.py`。
+- 两个脚本都在 `import cadquery` **之前**先 `import vtkmodules.vtkCommonDataModel`，用于规避 Windows 上 OCCT/VTK 的 DLL 加载冲突；该导入是**容错**的——它不会掩盖真正的错误，VTK 或 CadQuery 缺了什么都会由 CadQuery 的导入错误如实报出来（见下一节）。
+- 单次构建超时 60 秒，stdout 上限 64 MB，大装配体请注意容差设置。
+- 生成的文档走与 `add_3dmodel` 相同的存储路径，因此会同时出现在模型库与内嵌卡片中。
+- 没装 CadQuery 时，`build_3dmodel` 与导出都会返回带**安装命令**的错误，而不是堆栈——照它执行即可（细节见 [CadQuery 安装](#cadquery-安装由-agent-执行)）。
 
-## Installing CadQuery (the agent does it)
+## CadQuery 安装（由 agent 执行）
 
-CadQuery is **not bundled** with this plugin: `build_3dmodel` and every export drive the CadQuery **you** have installed, through the interpreter named by `cadqueryPython`. You do not have to work out the install yourself — just tell the agent *"install CadQuery"* / *"I want to be able to export STEP"* and it runs the procedure below.
+CadQuery **不随本插件分发**：`build_3dmodel` 与全部导出都是通过 `cadqueryPython` 配置项去调用**你机器上已安装的** CadQuery。所以你不需要自己研究安装——直接对 agent 说「装一下 CadQuery / 我要能导出 STEP」，它会按下面的流程做完。
 
-### What the agent does
+### agent 会执行的流程
 
-1. **Probe** with the `cadquery_env` tool (read-only, registered by this plugin). It reports the interpreter path and Python version, whether `cadquery` / `OCP` / `vtkmodules` / `ezdxf` import, which ones are missing, and **the exact commands to run**. The manual equivalent is `<python> lib/cadquery_probe.py`.
-2. **Install** by running those commands, typically:
+1. **探测**：调用 `cadquery_env` 工具（只读，注册在本插件上）。它返回解释器路径与 Python 版本、`cadquery` / `OCP` / `vtkmodules` / `ezdxf` 各自能否导入、缺哪些、以及**应该跑的确切命令**。手工等价物是 `<python> lib/cadquery_probe.py`。
+2. **安装**：在终端执行它给出的命令，典型是
 
    ```bash
    # Windows
@@ -281,7 +281,8 @@ CadQuery is **not bundled** with this plugin: `build_3dmodel` and every export d
    ~/cq-venv/bin/python -m pip install cadquery vtk
    ```
 
-3. **Point the plugin at it** in the profile's `cordis.patch.yml` (an id-targeted config override):
+   网速慢或被墙时加镜像：`-i https://pypi.tuna.tsinghua.edu.cn/simple`。
+3. **指向它**：把解释器路径写进 profile 的 `cordis.patch.yml`（按插件 id 覆盖配置）：
 
    ```yaml
    - id: cad-viewer
@@ -289,170 +290,169 @@ CadQuery is **not bundled** with this plugin: `build_3dmodel` and every export d
        cadqueryPython: 'D:\AI\3DModels\.venv\Scripts\python.exe'
    ```
 
-   Keep the single quotes if the path has spaces; backslashes are literal inside YAML single quotes.
-4. **Restart** `dsh web` — server config is read at boot only (`dev/restart-verify.ps1` preflights, health-checks and rolls back on failure).
-5. **Re-verify** with `cadquery_env` (all four packages should show a version and "建模与导出可用"), or simply export a STEP.
+   路径含空格时保留单引号；Windows 路径里的反斜杠在 YAML 单引号内是字面量，无需转义。
+4. **重启**：服务端配置只在启动时读取，所以要重启 `dsh web`（`dev/restart-verify.ps1` 会做预检 + 健康检查 + 失败自动回滚）。
+5. **复验**：再调用一次 `cadquery_env`，应显示四个包都有版本且「建模与导出可用」；或直接导出一次 STEP 收尾。
 
-### Why `pip install cadquery vtk` and not just cadquery
+### 为什么是 `pip install cadquery vtk` 两个包
 
-**VTK is not a declared cadquery dependency, but without it `import cadquery` does not even succeed.** In `cadquery 2.4.0`, `cadquery/occ_impl/exporters/__init__.py` does `from .vtk import exportVTP` at module level, and `exporters/vtk.py` starts with `from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter` — while PyPI's `requires_dist` for `cadquery 2.4.0` lists no `vtk`. So in an environment with only `pip install cadquery`, `import cadquery` fails outright and neither modeling nor **any** export works. Install both at once (`pip install cadquery vtk`): CadQuery then imports, and the **VTP** export (the only format that calls VTK during export) works too. `cadquery_env` calls this case out explicitly ("cadquery installed but not importable, cause: vtk").
+**VTK 不是 cadquery 的声明依赖，但缺了它连 `import cadquery` 都过不去**：`cadquery 2.4.0` 的 `cadquery/occ_impl/exporters/__init__.py` 在模块顶层就 `from .vtk import exportVTP`，而 `exporters/vtk.py` 第一行是 `from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter`；但 PyPI 上 `cadquery 2.4.0` 的 `requires_dist` 里没有 vtk。结果是：只 `pip install cadquery` 的环境里 `import cadquery` 直接失败，建模与**全部**导出都不可用。所以请一次装上两个包（`pip install cadquery vtk`）：CadQuery 能导入，且 **VTP** 导出（唯一在导出阶段直接调用 VTK 的格式）可用。`cadquery_env` 会把这种「cadquery 装了但导入失败、根因是缺 vtk」的情形直接点出来。
 
-### Versions and platforms
+### 版本与平台要求
 
 | | |
 |---|---|
-| Python | ≥ 3.8 (cadquery 2.4.0's `requires-python`). Developed and verified on **Python 3.12 + cadquery 2.4.0 + cadquery-ocp 7.7.2 + VTK 9.7.0 + ezdxf 1.4.4**. |
-| Wheels | `cadquery-ocp` ships Windows / Linux / macOS(arm64) wheels. On a platform without a matching wheel (e.g. a very old glibc) use conda: `mamba install -c conda-forge cadquery`, then point `cadqueryPython` at that environment's python. |
-| Where | Only on the machine running `dsh web`. Browsers and other devices need nothing — the library and every export happen server-side. |
-| Size | `cadquery-ocp` and `vtk` are several-hundred-MB wheels; budget time and disk for the first install. |
+| Python | ≥ 3.8（`cadquery 2.4.0` 的 `requires-python`）。开发与验证环境为 **Python 3.12 + cadquery 2.4.0 + cadquery-ocp 7.7.2 + VTK 9.7.0 + ezdxf 1.4.4**。 |
+| 轮子平台 | `cadquery-ocp` 提供 Windows / Linux / macOS(arm64) 轮子。没有匹配轮子的平台（例如很老的 glibc）改用 conda：`mamba install -c conda-forge cadquery`，再把 `cadqueryPython` 指向该环境的 python。 |
+| 装在哪台机器 | **只有运行 `dsh web` 的那台**需要装；浏览器端、其它设备都不需要（模型库与导出都在服务端完成）。 |
+| 磁盘/时间 | `cadquery-ocp` 与 `vtk` 都是数百 MB 级的轮子，首次安装请留出时间和空间。 |
 
-### Verify and troubleshoot
+### 验证与排错
 
-- One-liner: `"<python>" -c "import cadquery, vtkmodules, ezdxf; print(cadquery.__version__)"` (printing a version means it works).
-- Structured: `"<python>" lib/cadquery_probe.py`, or call the `cadquery_env` tool.
-- `ImportError: vtkmodules…` or any DLL-load error: first check `<python> -c "import vtkmodules.vtkCommonDataModel"` on its own; both plugin scripts already import VTK before CadQuery to dodge the OCCT/VTK conflict on Windows, and that step is **tolerant** (it cannot mask the real error — CadQuery's own import error is reported as-is).
-- Export says `VTP 导出需要 VTK`: that interpreter's `vtkmodules` is unusable — `<python> -m pip install vtk` (and remember CadQuery itself cannot import without VTK, so it is usually the same root cause).
-- A changed `cadqueryPython` has no effect: `dsh web` was not restarted (config is read at boot).
-- "interpreter does not exist": `cadqueryPython` points at a dead path — `cadquery_env` returns the whole venv-create → install → configure → restart sequence for it.
+- 一句话验证：`"<python>" -c "import cadquery, vtkmodules, ezdxf; print(cadquery.__version__)"`（能打印版本即通过）。
+- 结构化验证：`"<python>" lib/cadquery_probe.py`，或直接调用 `cadquery_env` 工具。
+- 报 `ImportError: vtkmodules…` / 各种 DLL 加载错误：先确认 `<python> -c "import vtkmodules.vtkCommonDataModel"` 单独能过；两个插件脚本已经按「先 VTK 后 cadquery」的顺序导入以规避 Windows 上的 OCCT/VTK 冲突，并且这一步是**容错**的（失败不会掩盖真正的错误，CadQuery 的导入错误会被如实报出来）。
+- 导出时提示 `VTP 导出需要 VTK`：该解释器的 `vtkmodules` 不可用，`<python> -m pip install vtk`（注意缺 VTK 时 CadQuery 也导入不了，通常是同一个根因）。
+- 改了 `cadqueryPython` 不生效：忘了重启 `dsh web`（配置只在启动时读）。
+- 报「解释器不存在」：`cadqueryPython` 指到了不存在的路径——`cadquery_env` 会直接给出建 venv + 安装 + 配置 + 重启的完整序列。
 
 ## HTTP API
 
-All routes are registered on the dsh web server. `apiPrefix` defaults to `/3dmodel` and `assetPrefix` to `/tcv`.
+所有路由注册在 dsh web server 上；`apiPrefix` 默认 `/3dmodel`，`assetPrefix` 默认 `/tcv`。
 
-### Assets
+### 静态资源
 
-| Method | Route | Description |
+| 方法 | 路由 | 说明 |
 |---|---|---|
-| `GET`/`HEAD` | `/tcv/<file>` | Serve a file from the plugin's `assets/` (the three-cad-viewer ESM bundle, CSS, type definitions). Path traversal is rejected; `maxUrlLength` applies. |
+| `GET`/`HEAD` | `/tcv/<file>` | 返回插件 `assets/` 中的文件（three-cad-viewer ESM 构建、CSS、类型声明）。拒绝路径穿越；受 `maxUrlLength` 限制。 |
 
-### Models
+### 模型
 
-| Method | Route | Description |
+| 方法 | 路由 | 说明 |
 |---|---|---|
-| `GET` | `/3dmodel/api/items` | List model metadata. Query: `session=<id>`, `workspace=<path>`, `onlySession=1`. With `onlySession=1` and a `session`, the list is filtered to that session; otherwise a non-empty `workspace` filters by workspace. Each row carries `hasSource` (whether the CadQuery source was kept). |
-| `POST` | `/3dmodel/api/items` | Store a model. Body: `{ model, title?, name?, sessionId?, workspace?, folder?, height?, script? }`. Returns `{ ok, id, name, title, createdAt }`. `script` is kept (capped at 256 KB) so exports can rebuild exact geometry. |
-| `GET` | `/3dmodel/api/items/:id` | Fetch one full entry, including the `Shape` JSON and, when present, `script`. |
-| `PATCH` | `/3dmodel/api/items/:id` | Update `title`, `name` and/or `folder`. |
-| `DELETE` | `/3dmodel/api/items/:id` | Delete one entry. |
+| `GET` | `/3dmodel/api/items` | 列出模型元数据。查询参数：`session=<id>`、`workspace=<path>`、`onlySession=1`。`onlySession=1` 且有 `session` 时按会话过滤；否则非空 `workspace` 按工作区过滤。每条元数据带 `hasSource`（是否保存了 CadQuery 源码）。 |
+| `POST` | `/3dmodel/api/items` | 保存模型。Body：`{ model, title?, name?, sessionId?, workspace?, folder?, height?, script? }`，返回 `{ ok, id, name, title, createdAt }`。`script` 会被保留（上限 256 KB），供导出时重建精确几何。 |
+| `GET` | `/3dmodel/api/items/:id` | 读取单个完整条目（含 `Shape` JSON 与可能的 `script`）。 |
+| `PATCH` | `/3dmodel/api/items/:id` | 更新 `title`、`name` 和/或 `folder`。 |
+| `DELETE` | `/3dmodel/api/items/:id` | 删除单个条目。 |
 
-### Export
+### 导出
 
-| Method | Route | Description |
+| 方法 | 路由 | 说明 |
 |---|---|---|
-| `GET` | `/3dmodel/api/items/formats` | List the exportable formats (`{ id, ext, label, desc, group }`). The client menu is built from this, so it cannot drift from what `cadquery_export.py` supports. |
-| `GET`/`HEAD` | `/3dmodel/api/items/:id/export?format=STEP` | Export one entry as a download (`content-disposition: attachment`, filename from the title, with an RFC 5987 `filename*` so non-ASCII titles survive). `format` is an `id` from `formats`; an unknown format is `400`, a missing entry `404`, a wrong method `405`, and an exporter failure `500` (JSON: `{ ok: false, error: … }`). |
+| `GET` | `/3dmodel/api/items/formats` | 列出可导出的格式（`{ id, ext, label, desc, group }`）。客户端菜单由此生成，因此菜单不会与 `cadquery_export.py` 实际支持的能力脱节。 |
+| `GET`/`HEAD` | `/3dmodel/api/items/:id/export?format=STEP` | 导出该条目并以附件下载（`content-disposition: attachment`，文件名取自标题，含 RFC 5987 的 `filename*` 以便中文标题正确落地）。`format` 取 `formats` 里的 `id`；未知格式返回 `400`，条目不存在返回 `404`，方法不对返回 `405`，导出器报错返回 `500`（JSON：`{ ok: false, error: … }`）。 |
 
-### Folders
+### 文件夹
 
-| Method | Route | Description |
+| 方法 | 路由 | 说明 |
 |---|---|---|
-| `GET` | `/3dmodel/api/items/folders` | List all folders (`{ id, name, parent, createdAt }`). |
-| `POST` | `/3dmodel/api/items/folders` | Create a folder: `{ name, parent? }` (`""` = root). |
-| `PATCH` | `/3dmodel/api/items/folders/:id` | Rename (`name`) and/or re-parent (`parent`). Moving a folder into itself or into one of its descendants is refused. |
-| `DELETE` | `/3dmodel/api/items/folders/:id` | Delete a folder; its models and child folders move up one level. |
+| `GET` | `/3dmodel/api/items/folders` | 列出全部文件夹（`{ id, name, parent, createdAt }`）。 |
+| `POST` | `/3dmodel/api/items/folders` | 新建文件夹：`{ name, parent? }`（`""` 表示根目录）。 |
+| `PATCH` | `/3dmodel/api/items/folders/:id` | 重命名（`name`）和/或改父级（`parent`）。把文件夹移入自身或其子孙会被拒绝。 |
+| `DELETE` | `/3dmodel/api/items/folders/:id` | 删除文件夹；其中的模型与子文件夹上移一层。 |
 
-Notes:
+说明：
 
-- Request bodies are capped at `maxBodyBytes` (32 MB by default); ids must look like a UUID.
-- Responses are JSON with `content-type: application/json; charset=utf-8`, API errors included (`{ ok: false, error: … }` with `400`/`404`). The asset route and a few protocol-level rejections answer in plain text instead: `400 bad id`, `405 method not allowed`, `414 uri too long`, and `403`/`404` on `/tcv/<file>`.
-- The bundled web client calls the **default** prefixes (`/3dmodel`, `/tcv`) with hard-coded paths. Changing `apiPrefix`/`assetPrefix` therefore requires editing `lib/client.js` as well.
+- 请求体受 `maxBodyBytes` 限制（默认 32 MB）；id 必须是 UUID 形式。
+- 响应统一为 `application/json; charset=utf-8`，API 错误同样是 JSON（`{ ok: false, error: … }`，配 `400`/`404`）。只有静态资源路由和少数协议层拒绝返回纯文本：`400 bad id`、`405 method not allowed`、`414 uri too long`，以及 `/tcv/<file>` 的 `403`/`404`。
+- 随插件分发的 Web 客户端使用**默认前缀**（`/3dmodel`、`/tcv`），路径是硬编码的。因此修改 `apiPrefix`/`assetPrefix` 时必须同时改 `lib/client.js`。
 
-## Configuration
+## 配置项
 
-Configured through the dsh config tree (schemastery), e.g. in the profile's `cordis.patch.yml`:
+通过 dsh 配置树（schemastery）配置，例如写在 profile 的 `cordis.patch.yml` 中：
 
-| Field | Default | Description |
+| 字段 | 默认值 | 说明 |
 |---|---|---|
-| `assetPrefix` | `/tcv` | URL prefix for the bundled three-cad-viewer assets. |
-| `apiPrefix` | `/3dmodel` | URL prefix for the model store API. |
-| `dataDir` | `<plugin>/data` | Directory holding the stored models. Must **not** be shared between two dsh instances writing concurrently. |
-| `maxUrlLength` | `2048` | Maximum URL length accepted by the asset route. |
-| `maxBodyBytes` | `33554432` (32 MB) | Maximum JSON request body size. |
-| `cadqueryPython` | `D:\AI\3DModels\.venv\Scripts\python.exe` | Python interpreter with CadQuery, used by `build_3dmodel` and by the export route. Change this for your machine. |
-| `cadqueryTolerance` | `0.1` | Default tessellation tolerance (also used by the mesh exports). |
-| `cadqueryExportTimeout` | `300000` (5 min) | Maximum runtime of a single export, in milliseconds. Raise it for very large meshes. |
+| `assetPrefix` | `/tcv` | three-cad-viewer 静态资源前缀。 |
+| `apiPrefix` | `/3dmodel` | 模型存储 API 前缀。 |
+| `dataDir` | `<插件目录>/data` | 模型存储目录。**不要让两个 dsh 实例并发写同一个目录**。 |
+| `maxUrlLength` | `2048` | 静态资源路由接受的 URL 最大长度。 |
+| `maxBodyBytes` | `33554432`（32 MB） | JSON 请求体上限。 |
+| `cadqueryPython` | `D:\AI\3DModels\.venv\Scripts\python.exe` | 装好 CadQuery 的 Python 解释器，供 `build_3dmodel` 与模型导出使用；请改成你机器上的路径。 |
+| `cadqueryTolerance` | `0.1` | 默认 tessellation 容差（也用于导出网格格式）。 |
+| `cadqueryExportTimeout` | `300000`（5 分钟） | 单次导出的最长执行时间（毫秒）。大网格导出 STEP/BREP 可能很慢，可按需调大。 |
 
-## Data and storage
+## 数据与存储
 
-- One file per model: `<dataDir>/<uuid>.json`, plus `<dataDir>/folders.meta.json` for the folder list.
-- Entries created by `build_3dmodel` also keep their `script` (the CadQuery source, capped at 256 KB) so an export can rebuild exact geometry; `add_3dmodel` entries have none and export from the mesh.
-- Entries carry a **content fingerprint** `h`: the `Shape` JSON is canonicalised (recursively sorted keys, `parts[].name`/`id` dropped) and hashed with SHA-256. Saving the same geometry under the same title returns the existing entry instead of adding a duplicate; the scan is retried a few times so two concurrent saves converge on one file. Only geometry is fingerprinted, so re-adding the same geometry and title also refreshes `script`.
-- Fingerprints are recomputed at startup, so entries written by an older version are upgraded in place.
-- Leftover `*.json.tmp` files from an interrupted write are cleaned up at startup.
-- Writes go directly to the final path — there is no atomic rename. **Back up `<dataDir>` if the library matters to you**; the folder is git-ignored in this repository precisely because it is user data.
+- 每个模型一个文件：`<dataDir>/<uuid>.json`；文件夹列表单独存在 `<dataDir>/folders.meta.json`。
+- `build_3dmodel` 创建的条目会额外保存一份 `script`（CadQuery 源码，上限 256 KB），导出时据此重建精确几何；`add_3dmodel` 的条目没有它，导出只能基于网格。
+- 条目带内容指纹 `h`：对 `Shape` JSON 做规范化（递归排序键、丢弃 `parts[].name`/`id`）后取 SHA-256。相同几何 + 相同标题的保存会返回既有条目而不再新建；期间会重试若干次，使并发保存收敛到同一个文件。指纹只看几何，因此同几何同标题重新入库会顺带刷新 `script`。
+- 启动时会重算指纹，旧版本写入的条目会被就地升级。
+- 启动时会清理写入中断遗留的 `*.json.tmp`。
+- 写入直接落到最终文件（没有原子 rename）。**若模型库对你重要，请自行备份 `<dataDir>`**；本仓库的 `.gitignore` 排除该目录，正因为它属于用户数据。
 
-Deleting a model removes that entry and nothing else: cards already rendered in the conversation keep their geometry, and nothing outside `dataDir` is touched.
+删除模型只删除该条目本身：对话中已渲染的卡片仍保留其几何，`dataDir` 之外的内容不受影响。
 
-## Project layout
+## 目录结构
 
 ```
 dsh-cad-viewer/
 ├── lib/
-│   ├── index.js            # server half: /tcv + /3dmodel routes, three tools, export download
-│   ├── client.js           # client half: 3D模型 tab (library/workbench), inline card, export submenu + toolbar button
-│   ├── cadquery_build.py   # CadQuery script -> three-cad-viewer Shape JSON
-│   ├── cadquery_export.py  # model -> every format CadQuery can write
-│   └── cadquery_probe.py   # reports cadquery/OCP/VTK/ezdxf of an interpreter (used by cadquery_env)
-├── dev/                    # development-only scripts (not used at runtime)
-│   ├── route-test.mjs      # route-level test: fake ctx, real CadQuery exports and cadquery_env calls
-│   ├── client-render-test.mjs  # client render test: fake React/DOM, menu -> export -> download
-│   ├── make-icon-preview.mjs   # renders the toolbar export icon next to the viewer's own icons
-│   ├── make-toolbar-layout.mjs # measures the toolbar box model and divider gaps (headless browser)
-│   ├── dump-css.mjs        # dumps the CSS the client bundle injects (used by the script above)
-│   ├── block-import.py     # blocks a package to prove the no-VTK / no-CadQuery behaviour
-│   └── restart-verify.ps1  # safe restart + health checks + rollback (logs to restart-log.log)
-├── assets/                # vendored prebuilt three-cad-viewer bundle (see assets/README.md)
+│   ├── index.js            # 服务端：/tcv + /3dmodel 路由、三个工具、导出下载
+│   ├── client.js           # 客户端：3D模型 tab（模型库/工作台）+ 内嵌模型卡片 + 导出子菜单与工具栏按钮
+│   ├── cadquery_build.py   # CadQuery 脚本 -> three-cad-viewer Shape JSON
+│   ├── cadquery_export.py  # 模型 -> CadQuery 支持的全部导出格式
+│   └── cadquery_probe.py   # 探测解释器里的 cadquery/OCP/VTK/ezdxf（cadquery_env 工具用它）
+├── dev/                    # 开发用脚本（不参与运行时）
+│   ├── route-test.mjs      # 服务端路由级测试（伪 ctx，真跑 CadQuery 导出与 cadquery_env）
+│   ├── client-render-test.mjs  # 客户端渲染测试（伪 React/DOM，跑通菜单->导出->下载）
+│   ├── make-icon-preview.mjs   # 把工具栏导出图标与查看器原生图标并排渲染，便于比对风格
+│   ├── make-toolbar-layout.mjs # 用真实查看器 + 真实插件 CSS 量工具栏盒模型与分隔线间距（无头浏览器）
+│   ├── dump-css.mjs        # 从客户端 bundle 里导出插件注入的 CSS（上面那个脚本用它）
+│   ├── block-import.py     # 屏蔽某个包后再跑插件脚本，用于验证「没装 VTK / 没装 CadQuery」的行为
+│   └── restart-verify.ps1  # 安全重启 + 健康检查 + 失败回滚（日志 restart-log.log）
+├── assets/                # 随插件分发的 three-cad-viewer 构建产物（见 assets/README.md）
 │   ├── three-cad-viewer.esm.min.js
 │   ├── three-cad-viewer.css
 │   └── index.d.ts
-├── docs/images/           # the screenshots used by both READMEs
-├── cordis.patch.yml       # bundle patch: inserts `id: cad-viewer`
-├── package.json           # type: module; dsh.bundle.patch + dsh.client.web
-├── README.md              # English documentation
-├── README.zh-CN.md        # Chinese documentation
+├── docs/images/           # README 里用到的截图
+├── cordis.patch.yml       # bundle patch：插入 `id: cad-viewer`
+├── package.json           # type: module；dsh.bundle.patch + dsh.client.web + files 白名单
+├── README.md              # 中文文档
 ├── CHANGELOG.md
 ├── LICENSE
-├── .gitignore             # excludes node_modules/, the data/ library and backups
-└── .gitattributes         # LF line endings; the vendored bundle is not diffed
+├── .gitignore             # 排除 node_modules/、模型库 data/ 与备份目录
+└── .gitattributes         # LF 行尾；不对随包分发的构建产物做 diff
 ```
 
-How the halves connect:
+两半如何衔接：
 
-- `cordis.patch.yml` inserts the plugin as `cad-viewer`; dsh loads `lib/index.js` on the server and, because `dsh.client.platform` is `web`, loads `lib/client.js` into the browser as a `window.__ModuleLoader__` module (client id `dsh-cad-viewer`).
-- The server registers a prefix route for the assets and one for the model API, and registers both tools on `ctx.tools`.
-- The client registers a `conversation.view` slot (`id: "model"`, `order: 21`) for the tab and a `conversation.chat.turnTail` slot for the inline card, and talks to the API with plain `fetch`.
+- `cordis.patch.yml` 把插件插入为 `cad-viewer`；dsh 在服务端加载 `lib/index.js`，并因为 `dsh.client.platform` 为 `web`，把 `lib/client.js` 作为 `window.__ModuleLoader__` 模块（客户端 id `dsh-cad-viewer`）加载进浏览器。
+- 服务端注册一个静态资源前缀路由与一个模型 API 前缀路由，并在 `ctx.tools` 上注册两个工具。
+- 客户端注册 `conversation.view` slot（`id: "model"`、`order: 21`）承载 tab，注册 `conversation.chat.turnTail` slot 承载内嵌卡片，并用普通 `fetch` 访问 API。
 
-## Development
+## 开发
 
-There is no bundler and no compile step.
+没有打包器，也没有编译步骤。
 
-- **Server changes** (`lib/index.js`, `lib/cadquery_build.py`) need a **restart of `dsh web`**; the web app runs with HMR disabled, so a change is not picked up live. `lib/cadquery_export.py` is the exception: it is started as a fresh process per export, so edits take effect immediately.
-- **Client changes** (`lib/client.js`) are loaded by the browser at page load — reload the GUI. `lib/client.js` is a pre-bundled `window.__ModuleLoader__` module (its own file, not an npm package), so editing it directly is the intended workflow.
+- **服务端改动**（`lib/index.js`、`lib/cadquery_build.py`）必须**重启 `dsh web`** 才生效；web-app 配置禁用了 HMR，改动不会被热加载。`lib/cadquery_export.py` 是**例外**：它每次导出都被重新启动为独立进程，改完立即生效。
+- **客户端改动**（`lib/client.js`）由浏览器在页面加载时读取——刷新 GUI 即可。`lib/client.js` 是一个预先打包好的 `window.__ModuleLoader__` 模块（独立文件，不是 npm 包），直接编辑它就是预期的工作方式。
 
-Three scripts under `dev/` verify the plugin on their own:
+`dev/` 下有三个可以独立运行的验证脚本：
 
 ```bash
-node dev/route-test.mjs           # mounts the plugin on a fake ctx, drives /formats and all 10 real exports
-node dev/client-render-test.mjs   # renders the client with fake React/DOM, drives menu -> export -> download
-powershell -File dev/restart-verify.ps1   # preflight + restart + health checks + rollback
+node dev/route-test.mjs           # 伪 ctx 挂载插件，跑通 /formats 与 10 种格式的真实导出
+node dev/client-render-test.mjs   # 伪 React/DOM 渲染客户端，跑通 菜单 -> 导出 -> 下载
+powershell -File dev/restart-verify.ps1   # 预检 + 重启 + 健康检查 + 失败自动回滚
 ```
 
-`restart-verify.ps1` kills the running dsh — and therefore the agent session that launched it — so start it **detached**; it appends everything it learns to `dev/restart-log.log`:
+`restart-verify.ps1` 会杀掉正在运行的 dsh（因此也会杀掉正在跑它的 agent 会话），所以它必须**以分离进程启动**，结果写在 `dev/restart-log.log`：
 
 ```powershell
 Invoke-CimMethod -ClassName Win32_Process -MethodName Create `
   -Arguments @{ CommandLine = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\AI\Plugins\dsh-cad-viewer\dev\restart-verify.ps1' }
 ```
 
-Besides the two base routes, its health check really downloads an STL / STEP / SVG / DXF / 3MF / VTP and asserts the byte count and headers; if anything fails it writes a disable patch and restarts (`RESULT=plugin-rolled-back`) so the GUI stays up.
+它的健康检查除了两条基础路由，还会真实下载 STL / STEP / SVG / DXF / 3MF / VTP 各一份并检查字节数与响应头；任何一项失败就写禁用 patch 并重启（`RESULT=plugin-rolled-back`），保证 GUI 可用。
 
-Safe restart procedure — a plugin that throws during load takes the whole tree down and the GUI with it:
+安全重启流程——插件加载时抛错会让整个插件树失败、GUI 掉线：
 
-1. **Preflight** the plugin in isolation: import it in a small ESM script and check `name`, `inject` and that `Config` parses. Do this **before** touching the running dsh.
-2. **Stop** the running dsh web process and wait for the port (default `3080`) to be released.
-3. **Start** it again detached, with stdout/stderr redirected to a log file. The restart helper must live outside the dsh process tree, otherwise stopping dsh kills the helper too.
-4. **Health-check** with the two `curl` probes from [Installation](#enable-and-verify) — check the **content type**, since the SPA fallback returns `200 text/html` for unknown paths.
-5. **If the plugin fails to load**, roll back: write a disable patch and restart with it,
+1. **预检**：先用一个小的 ESM 脚本单独 import 插件，校验 `name`、`inject`、以及 `Config` 能否解析；确认通过后再动正在运行的 dsh。
+2. **停旧**：结束正在运行的 dsh web 进程，等待端口（默认 `3080`）释放。
+3. **启新**：以独立进程启动，stdout/stderr 落盘。重启 helper 必须位于 dsh 进程树之外，否则杀 dsh 会连带终止 helper 自己。
+4. **健康检查**：用[安装](#启用与验证)里的两条 `curl` 探测——注意检查 **content-type**，因为未知路径会被 SPA fallback 以 `200 text/html` 返回。
+5. **失败回滚**：写一份禁用 patch 并用它重启，
 
    ```yaml
    - id: cad-viewer
@@ -460,47 +460,47 @@ Safe restart procedure — a plugin that throws during load takes the whole tree
    ```
 
    ```bash
-   dsh --profile web --patch disable.yml --dump-config   # confirm the plugin is gone
+   dsh --profile web --patch disable.yml --dump-config   # 确认插件已摘除
    ```
 
-   Then read the tail of the startup log to report the actual error.
+   然后读取启动日志尾部，报告真正的报错。
 
-Keeping the plugin honest while changing it:
+改代码时需要守住的几条：
 
-- `inject` must list **every** `ctx.*` service used in `apply` (`webServer`, `tools`); a missing entry throws `cannot get property "X" without inject` and fails the whole load.
-- `schemastery` object fields are optional by default — there is no `.optional()`; express defaults with `.default()`.
-- Routes registered inside `ctx.effect` must return a disposer (the plugin returns one closure that unregisters both routes).
+- `inject` 必须列出 `apply` 中访问的**每一个** `ctx.*` 服务（`webServer`、`tools`）；漏写会抛 `cannot get property "X" without inject`，并让整棵树加载失败。
+- `schemastery` 的对象字段默认可选，没有 `.optional()` 方法；默认值用 `.default()` 表达。
+- 在 `ctx.effect` 中注册的路由必须返回 disposer（本插件返回一个同时注销两条路由的闭包）。
 
-## Troubleshooting
+## 常见问题
 
-| Symptom | Cause / fix |
+| 现象 | 原因 / 处理 |
 |---|---|
-| No **3D模型** tab | The client half did not load, or the plugin is not in `dsh.profile.bundles`. Check `dsh --profile web --dump-config` and the browser console. |
-| `/3dmodel/api/items` returns `200 text/html` | The plugin is not mounted; you are seeing the SPA fallback. Check the startup log for a load error. |
-| Viewer stays blank | The `/tcv/three-cad-viewer.esm.min.js` route failed (check its content type) or the browser blocked the dynamic `import()`. A load failure renders a `three-cad-viewer 加载失败: …` message in the panel. |
-| `build_3dmodel` fails immediately | `cadqueryPython` points at an interpreter without CadQuery. Point it at a venv that has `cadquery` installed. |
-| `build_3dmodel` fails with a DLL/import error on Windows | The OCCT/VTK conflict `lib/cadquery_build.py` guards against — make sure the import order in that file was not changed. |
-| Saving a model returns `500` | Body larger than `maxBodyBytes`, or `dataDir` is not writable. |
-| Export returns `500` with a CadQuery error | `cadqueryPython` points at an interpreter without CadQuery (the export route shares it with `build_3dmodel`). |
-| An export is slow or times out | A mesh-only entry exporting STEP/BREP has to sew every triangle into a B-Rep (seconds for ~10k faces, longer beyond); raise `cadqueryExportTimeout`, use a mesh format (STL/3MF), or create the model with `build_3dmodel` so the source is kept and the export becomes exact and fast. |
-| The exported STEP opens as a pile of triangles | The entry is mesh-only, so STEP/BREP were rebuilt from its triangles. Rebuild the model from a CadQuery script to get real surfaces. |
-| A mesh-only SVG has no dashed hidden lines | Hidden-line removal over a triangle soup is impractically slow, so mesh-only entries use a silhouette + feature-edge projection; entries with source still get CadQuery's full HLR drawing. |
-| Picking a format downloads nothing | The export dialog shows the reason (e.g. a wrong CadQuery interpreter path). You can also open `/3dmodel/api/items/<id>/export?format=STEP` directly to read the server's JSON error. |
-| The same model appears twice | De-duplication keys on **geometry + title**; two entries with different titles (or different meshes) are intentionally distinct. |
-| The library is empty after moving the plugin | `dataDir` defaults to `<plugin>/data`; installing the plugin under a different path starts a fresh, empty library. Copy the old `data/` across, or point `dataDir` at it. |
-| `cannot get property "…" without inject` in the log | A `ctx` service is used but not declared in `inject`. |
-| Changes to `lib/index.js` have no effect | `dsh web` was not restarted. |
+| 看不到 **3D模型** tab | 客户端半未加载，或插件不在 `dsh.profile.bundles` 中。检查 `dsh --profile web --dump-config` 与浏览器控制台。 |
+| `/3dmodel/api/items` 返回 `200 text/html` | 插件未挂载，拿到的是 SPA fallback。看启动日志里的加载错误。 |
+| 查看器一片空白 | `/tcv/three-cad-viewer.esm.min.js` 路由失败（看 content-type），或浏览器拦截了动态 `import()`。加载失败时面板内会显示 `three-cad-viewer 加载失败: …`。 |
+| `build_3dmodel` 立即失败 | `cadqueryPython` 指向的解释器没有装 CadQuery；改指向装好 `cadquery` 的 venv。 |
+| `build_3dmodel` 在 Windows 上报 DLL/import 错误 | `lib/cadquery_build.py` 所规避的 OCCT/VTK 冲突——确认该文件的 import 顺序没有被改动。 |
+| 保存模型返回 `500` | 请求体超过 `maxBodyBytes`，或 `dataDir` 不可写。 |
+| 导出返回 `500 ✗ CadQuery …` | `cadqueryPython` 指向的解释器没有装 CadQuery（导出与 `build_3dmodel` 共用它）。 |
+| 导出很慢或超时 | 只有网格的条目导出 STEP/BREP 需要把每个三角面缝合成 B-Rep，约 1 万个面要数秒、面更多的会到几十秒；调大 `cadqueryExportTimeout`，或改用网格格式（STL/3MF），或让模型由 `build_3dmodel` 生成（保存源码后导出走精确几何，快得多）。 |
+| 导出的 STEP 在 CAD 里是一堆三角面片 | 该条目只有网格（没有源码），STEP/BREP 是由三角面重建的。用 CadQuery 脚本重建并入库即可得到真实曲面。 |
+| 网格条目的 SVG 没有虚线（隐藏线） | 对三角面汤做隐藏线消除（HLR）代价极高，因此网格条目改用「轮廓 + 特征边」投影；带源码的条目仍然是 CadQuery 的完整 HLR 图纸。 |
+| 选完格式后浏览器没有下载 | 导出对话框里会显示原因（例如 CadQuery 解释器路径不对）。也可直接访问 `/3dmodel/api/items/<id>/export?format=STEP` 看服务端返回的 JSON 错误。 |
+| 同一个模型出现两条 | 去重键是**几何 + 标题**；标题不同（或网格不同）的条目会被视为不同的模型。 |
+| 插件换目录后模型库空了 | `dataDir` 默认是 `<插件目录>/data`；插件装到别的路径就会得到一个空库。把旧的 `data/` 拷过去，或把 `dataDir` 指向它。 |
+| 日志出现 `cannot get property "…" without inject` | 使用了某个 `ctx` 服务但没有写进 `inject`。 |
+| 改了 `lib/index.js` 没反应 | 没有重启 `dsh web`。 |
 
-## Third-party notices
+## 第三方声明
 
-- **[three-cad-viewer](https://github.com/bernhard-42/three-cad-viewer)** — MIT, © Bernhard Walter. The prebuilt ESM bundle in `assets/` is vendored so the plugin is self-contained and needs no build step; it embeds **three.js** (MIT, © Three.js Authors, r184). See [`assets/README.md`](assets/README.md).
-- The upstream viewer is used unmodified; the integration (localisation, layout, hidden screenshot button, camera bindings) lives entirely in `lib/client.js`.
-- **[CadQuery](https://github.com/CadQuery/cadquery)** — Apache License 2.0, © 2015 Parametric Products Intellectual Holdings, LLC. It powers the `build_3dmodel` tool and every export (model library and workbench): `lib/cadquery_build.py` (script → mesh) and `lib/cadquery_export.py` (model → STEP/BREP/STL/3MF/AMF/VRML/VTP/TJS/SVG/DXF) call nothing but its public API.
-  - **CadQuery is not vendored or bundled.** The plugin invokes the interpreter you configure in `cadqueryPython`, i.e. the CadQuery **you** installed (the development environment runs Python 3.12 + `cadquery` 2.4.0 + `cadquery-ocp` 7.7.2 + VTK 9.7.0 + `ezdxf` 1.4.4). Without it, `build_3dmodel` and the export routes return an error carrying the install command; `add_3dmodel` and browsing the library keep working. Install steps: [Installing CadQuery](#installing-cadquery-the-agent-does-it).
-  - Components reached through CadQuery and actually exercised by the export paths: **cadquery-ocp** (Apache-2.0, CadQuery's Python bindings to Open CASCADE Technology; **OCCT** itself is LGPL-2.1 with an exception), **ezdxf** (MIT, © 2020 Manfred Moitzi, DXF output) and **VTK** (BSD, © Ken Martin, Will Schroeder, Bill Lorensen, VTP output).
-    - Note: **VTK is not in cadquery's dependency list**, yet `cadquery 2.4.0`'s `occ_impl/exporters` imports `vtkmodules` at import time, so it has to be installed alongside (`pip install cadquery vtk`).
-  - All names and trademarks belong to their respective owners; this plugin is not affiliated with, or endorsed by, the CadQuery project.
+- **[three-cad-viewer](https://github.com/bernhard-42/three-cad-viewer)** —— MIT，© Bernhard Walter。`assets/` 中的 ESM 构建为随插件分发的预构建产物，使插件自包含、无需构建步骤；其中内嵌 **three.js**（MIT，© Three.js Authors，r184）。详见 [`assets/README.md`](assets/README.md)。
+- 上游查看器未做修改；本地化、布局、隐藏截图按钮、鼠标按键绑定等集成逻辑全部位于 `lib/client.js`。
+- **[CadQuery](https://github.com/CadQuery/cadquery)** —— Apache License 2.0，© 2015 Parametric Products Intellectual Holdings, LLC。用于 `build_3dmodel` 工具与模型库/工作台的导出功能：脚本 `lib/cadquery_build.py`（建模 → 网格）与 `lib/cadquery_export.py`（模型 → STEP/BREP/STL/3MF/AMF/VRML/VTP/TJS/SVG/DXF）只调用它的公开 API。
+  - **CadQuery 不随本插件分发**：插件通过 `cadqueryPython` 配置项指定的 Python 解释器调用**你自己环境里已安装的** CadQuery（开发环境为 Python 3.12 + `cadquery` 2.4.0 + `cadquery-ocp` 7.7.2 + VTK 9.7.0 + `ezdxf` 1.4.4）。未安装时 `build_3dmodel` 与导出会返回带安装命令的错误，`add_3dmodel` 与模型库浏览不受影响。安装步骤见 [CadQuery 安装](#cadquery-安装由-agent-执行)。
+  - 经由 CadQuery 间接使用、并在导出路径上实际被调用的组件：**cadquery-ocp**（Apache-2.0，CadQuery 对 Open CASCADE Technology 的 Python 绑定；**OCCT** 本身为 LGPL-2.1 含例外条款）、**ezdxf**（MIT，© 2020 Manfred Moitzi，用于写出 DXF）、**VTK**（BSD，© Ken Martin / Will Schroeder / Bill Lorensen，用于写出 VTP）。
+    - 注意：**VTK 并未出现在 cadquery 的依赖声明里**，但 `cadquery 2.4.0` 的 `occ_impl/exporters` 在导入期就会 `import vtkmodules`，所以实际上必须一并安装（`pip install cadquery vtk`）。
+  - 各名称、商标与版权归各自所有者；本插件与 CadQuery 项目无从属关系，也未获得其背书。
 
-## License
+## 许可证
 
 [MIT](LICENSE) © 2026 CMoyuer
