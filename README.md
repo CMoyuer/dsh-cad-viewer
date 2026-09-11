@@ -17,6 +17,7 @@ A 3D model library and a full CAD viewer, embedded in the [dsh](https://github.c
 ## Table of contents
 
 - [What it does](#what-it-does)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -49,6 +50,16 @@ Three tools are registered for the agent:
 | `add_3dmodel` | Persist a three-cad-viewer `Shape` (cad-format JSON) and show it as an inline card. |
 | `build_3dmodel` | Run a CadQuery script, tessellate the solid, persist the result. |
 | `cadquery_env` | Read-only probe of the CadQuery environment (is the interpreter there, do cadquery / OCP / VTK / ezdxf import) plus the exact command that fixes what is missing. CadQuery is not bundled, so installing it is the agent's job — see [Installing CadQuery](#installing-cadquery-the-agent-does-it). |
+
+## Screenshots
+
+**Model library** — the tab's default view, here with three models also open as workbench tabs in the strip beside it. The `⋯` menu is open on `长方体 3×10×3 mm` and its **导出** flyout lists all ten formats. That entry came from `add_3dmodel` and kept no script, so the flyout header reads *仅有网格 · 由三角网格重建几何*; an entry created by `build_3dmodel` reads *已保存 CadQuery 源码 · 导出为精确几何* instead.
+
+![The 3D模型 tab: the model library, a card menu open on a model, and the export flyout listing STEP, BREP, STL, 3MF, AMF, VRML, VTP, TJS, SVG and DXF](docs/images/model-library.png)
+
+**Workbench** — a stored model opened in its own tab: the three-cad-viewer toolbar and navigation tree on the left, the plugin's **导出** button immediately before the `?` help button, and the canvas with the viewer's own status box and Z slider.
+
+![A model open in a workbench tab: the viewer toolbar, the navigation tree panel and the 3D canvas](docs/images/workbench.png)
 
 ## Features
 
@@ -394,6 +405,7 @@ dsh-cad-viewer/
 │   ├── three-cad-viewer.esm.min.js
 │   ├── three-cad-viewer.css
 │   └── index.d.ts
+├── docs/images/           # the screenshots used by both READMEs
 ├── cordis.patch.yml       # bundle patch: inserts `id: cad-viewer`
 ├── package.json           # type: module; dsh.bundle.patch + dsh.client.web
 ├── README.md              # English documentation

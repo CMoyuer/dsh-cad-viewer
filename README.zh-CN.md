@@ -17,6 +17,7 @@
 ## 目录
 
 - [功能概览](#功能概览)
+- [截图](#截图)
 - [特性](#特性)
 - [环境要求](#环境要求)
 - [安装](#安装)
@@ -49,6 +50,16 @@
 | `add_3dmodel` | 把一段 three-cad-viewer `Shape`（cad-format JSON）存入模型库，并在消息尾部渲染内嵌卡片。 |
 | `build_3dmodel` | 运行 CadQuery 脚本，tessellate 后入库。 |
 | `cadquery_env` | 只读探测 CadQuery 环境（解释器是否在、cadquery/OCP/VTK/ezdxf 是否能导入），并给出补齐缺口的准确命令。CadQuery 不随插件分发，安装由 agent 按它执行（见 [CadQuery 安装](#cadquery-安装由-agent-执行)）。 |
+
+## 截图
+
+**模型库** —— tab 的默认视图。图中旁边还开着三个工作台 tab；`长方体 3×10×3 mm` 卡片上打开了 `⋯` 菜单，**导出**子菜单列出全部 10 种格式。该条目由 `add_3dmodel` 创建、没有保存脚本，所以子菜单头部显示「仅有网格 · 由三角网格重建几何」；由 `build_3dmodel` 创建的条目则显示「已保存 CadQuery 源码 · 导出为精确几何」。
+
+![「3D模型」tab：模型库、模型卡片上打开的菜单，以及列出 STEP / BREP / STL / 3MF / AMF / VRML / VTP / TJS / SVG / DXF 的导出子菜单](docs/images/model-library.png)
+
+**工作台** —— 入库的模型在独立 tab 中打开：左侧是 three-cad-viewer 的工具栏与导航树，工具栏里 **导出** 按钮紧挨在 `?` 帮助按钮之前，右侧是画布（含查看器自带的状态框与 Z 轴滑块）。
+
+![在工作台 tab 中打开的模型：查看器工具栏、导航树面板与 3D 画布](docs/images/workbench.png)
 
 ## 特性
 
@@ -395,6 +406,7 @@ dsh-cad-viewer/
 │   ├── three-cad-viewer.esm.min.js
 │   ├── three-cad-viewer.css
 │   └── index.d.ts
+├── docs/images/           # 两份 README 里用到的截图
 ├── cordis.patch.yml       # bundle patch：插入 `id: cad-viewer`
 ├── package.json           # type: module；dsh.bundle.patch + dsh.client.web
 ├── README.md              # 英文文档
