@@ -1,16 +1,16 @@
-# dsh-model-viewer
+# dsh-cad-viewer
 
 把 **3D 模型库**和完整的 CAD 查看器嵌入 [dsh](https://github.com/deepseek-ai/deepseek-harness) Web GUI，作为会话区的 **「3D模型」tab**；同时注册两个工具，让 agent 用 **CadQuery** 建模并直接入库。
 
-[![License](https://img.shields.io/github/license/CMoyuer/dsh-3dmodel-viewer)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/CMoyuer/dsh-3dmodel-viewer)](https://github.com/CMoyuer/dsh-3dmodel-viewer/stargazers)
-[![Issues](https://img.shields.io/github/issues/CMoyuer/dsh-3dmodel-viewer)](https://github.com/CMoyuer/dsh-3dmodel-viewer/issues)
+[![License](https://img.shields.io/github/license/CMoyuer/dsh-cad-viewer)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/CMoyuer/dsh-cad-viewer)](https://github.com/CMoyuer/dsh-cad-viewer/stargazers)
+[![Issues](https://img.shields.io/github/issues/CMoyuer/dsh-cad-viewer)](https://github.com/CMoyuer/dsh-cad-viewer/issues)
 ![Platform](https://img.shields.io/badge/platform-dsh%20web-3b82f6)
 ![Node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 
 [English](README.md) · [更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
 
-> GitHub 仓库名是 `dsh-3dmodel-viewer`；npm 包名与 dsh 插件 id 都是 `dsh-model-viewer`。
+> GitHub 仓库名与 npm 包名都是 `dsh-cad-viewer`；dsh 插件 id 是 `cad-viewer`（见 `cordis.patch.yml`）。0.1.0 之前本插件叫 `dsh-model-viewer` / `model-viewer`——升级已有安装请看[更新日志](CHANGELOG.md)。
 
 ---
 
@@ -102,14 +102,14 @@
 ### 从 GitHub 安装
 
 ```bash
-dsh plugin --profile web add github:CMoyuer/dsh-3dmodel-viewer
+dsh plugin --profile web add github:CMoyuer/dsh-cad-viewer
 ```
 
 ### 从本地目录安装
 
 ```bash
-git clone https://github.com/CMoyuer/dsh-3dmodel-viewer.git
-cd dsh-3dmodel-viewer
+git clone https://github.com/CMoyuer/dsh-cad-viewer.git
+cd dsh-cad-viewer
 pnpm install          # 插件从自己的 node_modules 解析依赖
 dsh plugin --profile web add .
 ```
@@ -121,7 +121,7 @@ dsh plugin --profile web add .
 服务端插件只在启动时加载，改完需要**重启 dsh web**。随后确认两条路由返回的是插件自己的 content-type：
 
 ```bash
-dsh --profile web --dump-config                       # 组合树中应出现 id: model-viewer
+dsh --profile web --dump-config                       # 组合树中应出现 id: cad-viewer
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://127.0.0.1:3080/3dmodel/api/items
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://127.0.0.1:3080/tcv/three-cad-viewer.esm.min.js
 ```
@@ -274,7 +274,7 @@ CadQuery **不随本插件分发**：`build_3dmodel` 与全部导出都是通过
 3. **指向它**：把解释器路径写进 profile 的 `cordis.patch.yml`（按插件 id 覆盖配置）：
 
    ```yaml
-   - id: model-viewer
+   - id: cad-viewer
      config:
        cadqueryPython: 'D:\AI\3DModels\.venv\Scripts\python.exe'
    ```
@@ -376,7 +376,7 @@ CadQuery **不随本插件分发**：`build_3dmodel` 与全部导出都是通过
 ## 目录结构
 
 ```
-dsh-model-viewer/
+dsh-cad-viewer/
 ├── lib/
 │   ├── index.js            # 服务端：/tcv + /3dmodel 路由、三个工具、导出下载
 │   ├── client.js           # 客户端：3D模型 tab（模型库/工作台）+ 内嵌模型卡片 + 导出子菜单与工具栏按钮
@@ -395,7 +395,7 @@ dsh-model-viewer/
 │   ├── three-cad-viewer.esm.min.js
 │   ├── three-cad-viewer.css
 │   └── index.d.ts
-├── cordis.patch.yml       # bundle patch：插入 `id: model-viewer`
+├── cordis.patch.yml       # bundle patch：插入 `id: cad-viewer`
 ├── package.json           # type: module；dsh.bundle.patch + dsh.client.web
 ├── README.md              # 英文文档
 ├── README.zh-CN.md        # 中文文档
@@ -407,7 +407,7 @@ dsh-model-viewer/
 
 两半如何衔接：
 
-- `cordis.patch.yml` 把插件插入为 `model-viewer`；dsh 在服务端加载 `lib/index.js`，并因为 `dsh.client.platform` 为 `web`，把 `lib/client.js` 作为 `window.__ModuleLoader__` 模块（客户端 id `dsh-model-viewer`）加载进浏览器。
+- `cordis.patch.yml` 把插件插入为 `cad-viewer`；dsh 在服务端加载 `lib/index.js`，并因为 `dsh.client.platform` 为 `web`，把 `lib/client.js` 作为 `window.__ModuleLoader__` 模块（客户端 id `dsh-cad-viewer`）加载进浏览器。
 - 服务端注册一个静态资源前缀路由与一个模型 API 前缀路由，并在 `ctx.tools` 上注册两个工具。
 - 客户端注册 `conversation.view` slot（`id: "model"`、`order: 21`）承载 tab，注册 `conversation.chat.turnTail` slot 承载内嵌卡片，并用普通 `fetch` 访问 API。
 
@@ -430,7 +430,7 @@ powershell -File dev/restart-verify.ps1   # 预检 + 重启 + 健康检查 + 失
 
 ```powershell
 Invoke-CimMethod -ClassName Win32_Process -MethodName Create `
-  -Arguments @{ CommandLine = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\AI\Plugins\dsh-model-viewer\dev\restart-verify.ps1' }
+  -Arguments @{ CommandLine = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\AI\Plugins\dsh-cad-viewer\dev\restart-verify.ps1' }
 ```
 
 它的健康检查除了两条基础路由，还会真实下载 STL / STEP / SVG / DXF / 3MF / VTP 各一份并检查字节数与响应头；任何一项失败就写禁用 patch 并重启（`RESULT=plugin-rolled-back`），保证 GUI 可用。
@@ -444,7 +444,7 @@ Invoke-CimMethod -ClassName Win32_Process -MethodName Create `
 5. **失败回滚**：写一份禁用 patch 并用它重启，
 
    ```yaml
-   - id: model-viewer
+   - id: cad-viewer
      disabled: true
    ```
 

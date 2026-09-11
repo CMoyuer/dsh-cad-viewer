@@ -1,4 +1,4 @@
-// Client-half render test for dsh-model-viewer — no browser involved.
+// Client-half render test for dsh-cad-viewer — no browser involved.
 //
 // The bundle is a `window.__ModuleLoader__.load({ factory })` script, so it is
 // evaluated with a fake window/document and a minimal React (createElement +
@@ -177,7 +177,7 @@ const source = readFileSync(new URL("../lib/client.js", import.meta.url), "utf8"
 new Function("window", "document", "URL", "CustomEvent", "MutationObserver", "ResizeObserver", "requestAnimationFrame", source)(
   globalThis.window, fakeDoc, globalThis.URL, class CustomEvent {}, undefined, undefined, undefined,
 );
-check("bundle registers itself", !!captured && captured.id === "dsh-model-viewer", captured && captured.id);
+check("bundle registers itself", !!captured && captured.id === "dsh-cad-viewer", captured && captured.id);
 
 const mod = captured.factory((spec) => {
   if (spec === "react") return react;

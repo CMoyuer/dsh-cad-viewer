@@ -1,7 +1,7 @@
-// Route-level test for dsh-model-viewer without starting dsh:
+// Route-level test for dsh-cad-viewer without starting dsh:
 // fakes ctx, mounts the plugin, then drives the HTTP handlers directly.
 import { readFileSync } from "node:fs";
-import { apply, Config, name } from "file:///D:/AI/Plugins/dsh-model-viewer/lib/index.js";
+import { apply, Config, name } from "file:///D:/AI/Plugins/dsh-cad-viewer/lib/index.js";
 
 const routes = [];
 const tools = [];

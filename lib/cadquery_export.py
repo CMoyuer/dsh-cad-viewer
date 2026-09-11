@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-cadquery_export.py — export a stored dsh-model-viewer model to every file format
+cadquery_export.py — export a stored dsh-cad-viewer model to every file format
 CadQuery can write: STEP, BREP, STL, 3MF, AMF, VRML, VTP, TJS, SVG, DXF.
 
 Two sources are supported:
@@ -609,7 +609,7 @@ def export_from_mesh(parts, fmt, out, tolerance, angular_tolerance):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Export a dsh-model-viewer model via CadQuery")
+    parser = argparse.ArgumentParser(description="Export a dsh-cad-viewer model via CadQuery")
     parser.add_argument("--format", required=True, choices=sorted(FORMATS.keys()))
     parser.add_argument("--out", required=True)
     parser.add_argument("--model", help="stored model JSON (mesh) to export")

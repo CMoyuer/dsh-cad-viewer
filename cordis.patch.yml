@@ -1,4 +1,4 @@
-# dsh-model-viewer bundle patch: register the three-cad-viewer "模型" tab plugin.
+# dsh-cad-viewer bundle patch: register the three-cad-viewer "模型" tab plugin.
 - insert:
-    - id: model-viewer
-      name: dsh-model-viewer
+    - id: cad-viewer
+      name: dsh-cad-viewer

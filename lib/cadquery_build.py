@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 cadquery_build.py — run a CadQuery script and emit a three-cad-viewer "Shape"
-JSON (cad-format) to stdout. Used by the dsh-model-viewer `build_3dmodel` tool.
+JSON (cad-format) to stdout. Used by the dsh-cad-viewer `build_3dmodel` tool.
 
 Usage:
     python cadquery_build.py <script.py> [tol]

@@ -1,4 +1,4 @@
-# restart-verify.ps1 — safe restart of dsh web for dsh-model-viewer, with the
+# restart-verify.ps1 — safe restart of dsh web for dsh-cad-viewer, with the
 # export API added to the health check.
 #
 #   Phase 0  preflight  : import the plugin's server half (must print PREFLIGHT_OK)
@@ -18,9 +18,9 @@ $ErrorActionPreference = "Continue"
 
 $dshBin     = "C:\Users\Moyuer\AppData\Roaming\npm\node_modules\@deepseek-ai\dsh\lib\bin.js"
 $profileDir = "C:\Users\Moyuer\.dsh\profiles\web"
-$pluginDir  = "D:\AI\Plugins\dsh-model-viewer"
+$pluginDir  = "D:\AI\Plugins\dsh-cad-viewer"
 $log        = Join-Path $pluginDir "dev\restart-log.log"
-$tmp        = Join-Path $env:TEMP "dsh-model-viewer-restart"
+$tmp        = Join-Path $env:TEMP "dsh-cad-viewer-restart"
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 $stdout = Join-Path $tmp "dsh.stdout.log"
 $stderr = Join-Path $tmp "dsh.stderr.log"
@@ -57,7 +57,7 @@ Set-Content -Path $log -Value ("[{0}] === restart+verify started ===" -f (Get-Da
 
 # ---- Phase 0: preflight --------------------------------------------------
 Log "phase0 preflight"
-$pre = & node (Join-Path $profileDir "model-viewer-preflight.mjs") 2>&1 | Out-String
+$pre = & node (Join-Path $profileDir "cad-viewer-preflight.mjs") 2>&1 | Out-String
 Log ("preflight output: " + (($pre -replace "`r?`n", " ").Trim()))
 if ($pre -notmatch 'PREFLIGHT_OK') {
   Log "RESULT=preflight-failed (dsh left untouched)"
@@ -176,8 +176,8 @@ if ($fail.Count -eq 0) {
 Log ("health failed (" + ($fail -join ",") + ") -> rolling back")
 $patchFile = Join-Path $profileDir "cordis.patch.yml"
 $raw = Get-Content $patchFile -Raw
-if ($raw -notmatch '(?m)^-\s*id:\s*model-viewer\s*$') {
-  Add-Content -Path $patchFile -Value "`n# Rollback overlay: disable dsh-model-viewer (added by restart-verify.ps1 on failure).`n- id: model-viewer`n  disabled: true"
+if ($raw -notmatch '(?m)^-\s*id:\s*cad-viewer\s*$') {
+  Add-Content -Path $patchFile -Value "`n# Rollback overlay: disable dsh-cad-viewer (added by restart-verify.ps1 on failure).`n- id: cad-viewer`n  disabled: true"
   Log "added disable overlay to cordis.patch.yml"
 } else {
   Log "disable overlay already present"
@@ -186,5 +186,5 @@ foreach ($p in @(DshProcs)) { try { Stop-Process -Id $p.ProcessId -Force -ErrorA
 WaitPortGone | Out-Null
 StartDsh
 WaitPortUp | Out-Null
-Log "RESULT=plugin-rolled-back (dsh restarted with dsh-model-viewer disabled)"
+Log "RESULT=plugin-rolled-back (dsh restarted with dsh-cad-viewer disabled)"
 exit 0

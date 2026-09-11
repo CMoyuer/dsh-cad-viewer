@@ -1,16 +1,16 @@
-# dsh-model-viewer
+# dsh-cad-viewer
 
 A 3D model library and a full CAD viewer, embedded in the [dsh](https://github.com/deepseek-ai/deepseek-harness) web GUI as a **"3D模型"** tab — plus two agent tools that build geometry with **CadQuery** and drop it straight into the library.
 
-[![License](https://img.shields.io/github/license/CMoyuer/dsh-3dmodel-viewer)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/CMoyuer/dsh-3dmodel-viewer)](https://github.com/CMoyuer/dsh-3dmodel-viewer/stargazers)
-[![Issues](https://img.shields.io/github/issues/CMoyuer/dsh-3dmodel-viewer)](https://github.com/CMoyuer/dsh-3dmodel-viewer/issues)
+[![License](https://img.shields.io/github/license/CMoyuer/dsh-cad-viewer)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/CMoyuer/dsh-cad-viewer)](https://github.com/CMoyuer/dsh-cad-viewer/stargazers)
+[![Issues](https://img.shields.io/github/issues/CMoyuer/dsh-cad-viewer)](https://github.com/CMoyuer/dsh-cad-viewer/issues)
 ![Platform](https://img.shields.io/badge/platform-dsh%20web-3b82f6)
 ![Node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 
 [中文文档](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)
 
-> The GitHub repository is `dsh-3dmodel-viewer`; the npm package and the dsh plugin id are both `dsh-model-viewer`.
+> The GitHub repository and the npm package are both `dsh-cad-viewer`; the dsh plugin id is `cad-viewer` (`cordis.patch.yml`). The plugin was called `dsh-model-viewer` / `model-viewer` up to 0.1.0 — see the [changelog](CHANGELOG.md) if you are upgrading an existing install.
 
 ---
 
@@ -102,14 +102,14 @@ There is no build step and no `prepare` script, so installing from git needs no 
 ### From GitHub
 
 ```bash
-dsh plugin --profile web add github:CMoyuer/dsh-3dmodel-viewer
+dsh plugin --profile web add github:CMoyuer/dsh-cad-viewer
 ```
 
 ### From a local checkout
 
 ```bash
-git clone https://github.com/CMoyuer/dsh-3dmodel-viewer.git
-cd dsh-3dmodel-viewer
+git clone https://github.com/CMoyuer/dsh-cad-viewer.git
+cd dsh-cad-viewer
 pnpm install          # the plugin resolves its own deps from its own node_modules
 dsh plugin --profile web add .
 ```
@@ -121,7 +121,7 @@ dsh plugin --profile web add .
 Restart dsh web (server-side plugins are only loaded at boot), then check that both routes answer with the plugin's own content type:
 
 ```bash
-dsh --profile web --dump-config                       # the tree should contain id: model-viewer
+dsh --profile web --dump-config                       # the tree should contain id: cad-viewer
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://127.0.0.1:3080/3dmodel/api/items
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://127.0.0.1:3080/tcv/three-cad-viewer.esm.min.js
 ```
@@ -273,7 +273,7 @@ CadQuery is **not bundled** with this plugin: `build_3dmodel` and every export d
 3. **Point the plugin at it** in the profile's `cordis.patch.yml` (an id-targeted config override):
 
    ```yaml
-   - id: model-viewer
+   - id: cad-viewer
      config:
        cadqueryPython: 'D:\AI\3DModels\.venv\Scripts\python.exe'
    ```
@@ -375,7 +375,7 @@ Deleting a model removes that entry and nothing else: cards already rendered in 
 ## Project layout
 
 ```
-dsh-model-viewer/
+dsh-cad-viewer/
 ├── lib/
 │   ├── index.js            # server half: /tcv + /3dmodel routes, three tools, export download
 │   ├── client.js           # client half: 3D模型 tab (library/workbench), inline card, export submenu + toolbar button
@@ -394,7 +394,7 @@ dsh-model-viewer/
 │   ├── three-cad-viewer.esm.min.js
 │   ├── three-cad-viewer.css
 │   └── index.d.ts
-├── cordis.patch.yml       # bundle patch: inserts `id: model-viewer`
+├── cordis.patch.yml       # bundle patch: inserts `id: cad-viewer`
 ├── package.json           # type: module; dsh.bundle.patch + dsh.client.web
 ├── README.md              # English documentation
 ├── README.zh-CN.md        # Chinese documentation
@@ -406,7 +406,7 @@ dsh-model-viewer/
 
 How the halves connect:
 
-- `cordis.patch.yml` inserts the plugin as `model-viewer`; dsh loads `lib/index.js` on the server and, because `dsh.client.platform` is `web`, loads `lib/client.js` into the browser as a `window.__ModuleLoader__` module (client id `dsh-model-viewer`).
+- `cordis.patch.yml` inserts the plugin as `cad-viewer`; dsh loads `lib/index.js` on the server and, because `dsh.client.platform` is `web`, loads `lib/client.js` into the browser as a `window.__ModuleLoader__` module (client id `dsh-cad-viewer`).
 - The server registers a prefix route for the assets and one for the model API, and registers both tools on `ctx.tools`.
 - The client registers a `conversation.view` slot (`id: "model"`, `order: 21`) for the tab and a `conversation.chat.turnTail` slot for the inline card, and talks to the API with plain `fetch`.
 
@@ -429,7 +429,7 @@ powershell -File dev/restart-verify.ps1   # preflight + restart + health checks 
 
 ```powershell
 Invoke-CimMethod -ClassName Win32_Process -MethodName Create `
-  -Arguments @{ CommandLine = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\AI\Plugins\dsh-model-viewer\dev\restart-verify.ps1' }
+  -Arguments @{ CommandLine = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\AI\Plugins\dsh-cad-viewer\dev\restart-verify.ps1' }
 ```
 
 Besides the two base routes, its health check really downloads an STL / STEP / SVG / DXF / 3MF / VTP and asserts the byte count and headers; if anything fails it writes a disable patch and restarts (`RESULT=plugin-rolled-back`) so the GUI stays up.
@@ -443,7 +443,7 @@ Safe restart procedure — a plugin that throws during load takes the whole tree
 5. **If the plugin fails to load**, roll back: write a disable patch and restart with it,
 
    ```yaml
-   - id: model-viewer
+   - id: cad-viewer
      disabled: true
    ```
 
