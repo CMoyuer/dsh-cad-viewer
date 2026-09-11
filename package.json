@@ -9,6 +9,14 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "lib/",
+    "!lib/__pycache__/",
+    "assets/",
+    "docs/",
+    "cordis.patch.yml",
+    "CHANGELOG.md"
+  ],
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
