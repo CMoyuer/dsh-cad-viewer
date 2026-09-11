@@ -55,11 +55,11 @@
 
 **模型库** —— tab 的默认视图。图中旁边还开着三个工作台 tab；`长方体 3×10×3 mm` 卡片上打开了 `⋯` 菜单，**导出**子菜单列出全部 10 种格式。该条目由 `add_3dmodel` 创建、没有保存脚本，所以子菜单头部显示「仅有网格 · 由三角网格重建几何」；由 `build_3dmodel` 创建的条目则显示「已保存 CadQuery 源码 · 导出为精确几何」。
 
-![「3D模型」tab：模型库、模型卡片上打开的菜单，以及列出 STEP / BREP / STL / 3MF / AMF / VRML / VTP / TJS / SVG / DXF 的导出子菜单](docs/images/model-library.png)
+![「3D模型」tab：模型库、模型卡片上打开的菜单，以及列出 STEP / BREP / STL / 3MF / AMF / VRML / VTP / TJS / SVG / DXF 的导出子菜单](https://raw.githubusercontent.com/CMoyuer/dsh-cad-viewer/main/docs/images/model-library.png)
 
 **工作台** —— 入库的模型在独立 tab 中打开：左侧是 three-cad-viewer 的工具栏与导航树，工具栏里 **导出** 按钮紧挨在 `?` 帮助按钮之前，右侧是画布（含查看器自带的状态框与 Z 轴滑块）。
 
-![在工作台 tab 中打开的模型：查看器工具栏、导航树面板与 3D 画布](docs/images/workbench.png)
+![在工作台 tab 中打开的模型：查看器工具栏、导航树面板与 3D 画布](https://raw.githubusercontent.com/CMoyuer/dsh-cad-viewer/main/docs/images/workbench.png)
 
 ## 特性
 
