@@ -26,7 +26,7 @@
 - **模型库** —— 文件夹、全库搜索、拖拽移动、重命名 / 移动 / 删除，以及 10 种格式**导出**。
 - **工作台** —— 为库中任意模型挂载 three-cad-viewer 完整界面；左 / 右键旋转、中键平移、滚轮缩放。
 - **对话内嵌卡片** —— 调用过模型工具的那条消息末尾出现可折叠卡片，*全屏* 即以工作台打开同一模型。
-- **三个 agent 工具** —— `add_3dmodel`（存 `Shape` JSON）、`build_3dmodel`（跑 CadQuery 脚本）、`cadquery_env`（探测 CadQuery 环境）。
+- **五个 agent 工具** —— `add_3dmodel` / `build_3dmodel`（建模入库）、`list_3dmodels`（读列表）、`delete_3dmodel`（删条目）、`cadquery_env`（探测 CadQuery 环境）。
 - **服务端存储** —— 一个条目一个 JSON 文件，同一 dsh 实例下所有设备看到同一份库；不用 IndexedDB、不依赖外部服务、没有构建步骤。
 
 ## 安装
@@ -84,6 +84,8 @@ agent 生成的模型会立刻出现（按创建时间排序）；点卡片即�
 
 右键卡片时菜单在鼠标位置弹出。删除文件夹**不会删除内容**：其中的模型与子文件夹上移一层。
 
+库也可以交给 agent 操作：`list_3dmodels` 读回条目与 id，`delete_3dmodel` 删条目（见 [Agent 工具](#agent-工具)）。
+
 ### 导出
 
 同一个格式子菜单出现在两处：模型库卡片的 `⋯` → 导出，以及工作台工具栏的 **导出** 按钮（在 `?` 之前）。
@@ -112,7 +114,9 @@ agent 生成的模型会立刻出现（按创建时间排序）；点卡片即�
 | 工具 | 作用 |
 |---|---|
 | `add_3dmodel` | 把 three-cad-viewer `Shape`（cad-format JSON）存入模型库，并在消息末尾渲染内嵌卡片。 |
-| `build_3dmodel` | 运行 CadQuery 脚本，tessellate 后入库，并**保存脚本**（上限 256 KB）以便日后导出精确几何。 |
+| `build_3dmodel` | 运行 CadQuery 脚本，tessellate 后入库，并**保存脚本**（上限 256 KB）以便日后导出精确几何。装配体会拆成**每个零件一个树节点**，可单独显示/隐藏。 |
+| `list_3dmodels` | **只读**读回模型库：id、标题、所属文件夹路径、入库时间、零件/三角面数、是否存了 CadQuery 源码，以及文件夹清单。支持 `query`（标题/名称/id 子串）、`folder`（文件夹 id、名称或路径片段；`/` 表示根目录）、`limit`（默认 100，上限 500）。 |
+| `delete_3dmodel` | 从模型库删除条目（连同网格与已保存的 CadQuery 源码，**没有撤销**）。用 `id` 精确删除，或用 `title` 精确匹配（忽略大小写与首尾空格）；标题匹配到多条时**一条都不删**，而是把候选列回来，确认后才用 `all: true` 全删。文件夹本身不受影响。 |
 | `cadquery_env` | 只读探测 CadQuery 环境（解释器是否在、四个包能否导入），并给出补齐缺口的准确命令。 |
 
 ```jsonc
@@ -121,10 +125,19 @@ agent 生成的模型会立刻出现（按创建时间排序）；点卡片即�
 
 // build_3dmodel：脚本必须 import cadquery as cq 并给 model 赋值
 { "script": "import cadquery as cq\nmodel = cq.Workplane('XY').box(20, 20, 10)", "title": "Box", "tolerance": 0.1 }
+
+// list_3dmodels：不带参数就是整个库；下面的写法只看「零件」文件夹里标题含“齿轮”的前 10 条
+{ "query": "齿轮", "folder": "零件", "limit": 10 }
+
+// delete_3dmodel：id 与 title 都给时会互相校验，对不上就不删
+{ "id": "8fb74096-b054-4a49-b4d4-6bd5a6e6f804", "title": "支架" }
 ```
 
 - **去重键是「几何 + 标题」**：相同几何 + 相同标题再存一次只会更新原条目，不会多出第二条。
+- **标题不唯一**：`add_3dmodel` 的去重键包含几何，所以几何不同的模型可以同名。按标题删除前先用 `list_3dmodels` 看清楚有几条。
+- **改现有模型必须先问用户**：用户要求修改库里已有的模型时，agent 要先问是**替换**原条目、还是**保留原条目并另存一份副本**。注意同标题重存**不等于替换**——去重键是「几何 + 标题」，几何一变就会多出一条、原条目原样保留；替换的正确顺序是**先存修改版，再按 id 删掉旧条目**（中间失败也不会丢东西）。这条约定写在 `add_3dmodel` 与 `build_3dmodel` 的工具描述里，`delete_3dmodel` 的描述也指明它是替换的后半步。
 - `build_3dmodel` 的 `model` 必须是带 `.tessellate()` 的 `cq.Workplane` / `cq.Shape`；装配体请先 `model = assy.toCompound()`。脚本报错或没有赋值时返回 `{ "ok": false, "error": … }`，不会入库一个空模型。
+- **装配体自动分件**：用 `cq.Assembly` 建模时不必额外做什么——插件会从脚本命名空间里的 `assy` 取回 `toCompound()` 丢掉的零件名、颜色和位置，每个零件成为模型树里的一个节点，可以单独显示/隐藏。想自己控制时，给脚本加一个模块级 `parts`：`[(名称, 形状, 颜色), …]`，或 `{name, shape, color}` 字典列表。**零件名必须唯一**：树的路径是 `/<模型名>/<名称>`，网格也按同一个键查找，重名会让两个零件塌成一个节点（插件会自动加 `_2`、`_3` 后缀）。既没有 `parts` 也没有 `Assembly` 时，多实体的 `Compound` 会按实体拆成 `Part_1`、`Part_2`…
 - 单位就是 CadQuery 的单位（通常 mm），插件不做换算；单次构建超时 60 秒。
 
 ## 环境要求
@@ -240,9 +253,12 @@ CadQuery 以 Apache-2.0 发布、**不随本插件分发**：插件通过 `cadqu
 
 ```bash
 node dev/route-test.mjs           # 伪 ctx 挂载插件，跑通路由与 10 种格式的真实导出
+node dev/tool-test.mjs            # 伪 ctx + 临时 dataDir，跑通 5 个 agent 工具（入库 / 列表 / 删除）
 node dev/client-render-test.mjs   # 伪 React/DOM 渲染客户端，跑通 菜单 -> 导出 -> 下载
 powershell -File dev/restart-verify.ps1   # 预检 + 重启 + 健康检查 + 失败自动回滚
 ```
+
+`tool-test.mjs` 用的是临时 `dataDir`（`%TEMP%` 下的随机目录，跑完即删），不会碰真实模型库。
 
 `restart-verify.ps1` 会杀掉正在运行的 dsh（因此也会杀掉正在跑它的 agent 会话），必须以**分离进程**启动，否则它会终止自己；结果写在 `dev/restart-log.log`：
 
@@ -264,7 +280,7 @@ assets/    随插件分发的 three-cad-viewer 构建产物（见 assets/README.
 docs/      README 用到的截图
 ```
 
-`cordis.patch.yml` 把插件插入为 `cad-viewer`；服务端加载 `lib/index.js`，注册一个静态资源前缀路由与一个模型 API 前缀路由，并在 `ctx.tools` 上注册三个工具；客户端注册 `conversation.view`（`id: "model"`、`order: 21`）承载 tab、注册 `conversation.chat.turnTail` 承载内嵌卡片，并用普通 `fetch` 访问 API。
+`cordis.patch.yml` 把插件插入为 `cad-viewer`；服务端加载 `lib/index.js`，注册一个静态资源前缀路由与一个模型 API 前缀路由，并在 `ctx.tools` 上注册五个工具；客户端注册 `conversation.view`（`id: "model"`、`order: 21`）承载 tab、注册 `conversation.chat.turnTail` 承载内嵌卡片，并用普通 `fetch` 访问 API。
 
 ## AI 生成声明
 

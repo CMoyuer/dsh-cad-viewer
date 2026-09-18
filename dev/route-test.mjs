@@ -103,7 +103,11 @@ for (const format of ["STEP", "BREP", "STL", "3MF", "AMF", "VRML", "VTP", "TJS",
 // 5. tool descriptions: the only instructions the agent gets for these tools
 {
   const byName = Object.fromEntries(tools.map((t) => [t.name, t]));
-  check("all three tools registered", !!byName.add_3dmodel && !!byName.build_3dmodel && !!byName.cadquery_env, tools.map((t) => t.name).join(","));
+  check(
+    "all five tools registered",
+    ["add_3dmodel", "build_3dmodel", "cadquery_env", "list_3dmodels", "delete_3dmodel"].every((n) => byName[n]),
+    tools.map((t) => t.name).join(","),
+  );
   const build = byName.build_3dmodel?.description ?? "";
   const add = byName.add_3dmodel?.description ?? "";
   check("build_3dmodel names the real tab", /3D模型/.test(build), `${build.length} chars`);
@@ -114,6 +118,19 @@ for (const format of ["STEP", "BREP", "STL", "3MF", "AMF", "VRML", "VTP", "TJS",
   check(
     "add_3dmodel describes the Shape structure inline",
     /vertices/.test(byName.add_3dmodel?.parameters?.properties?.model?.description ?? ""),
+  );
+  // The replace-vs-copy rule has to reach BOTH store tools: the agent picks one
+  // of them per request, and a changed geometry under the same title silently
+  // creates a second entry rather than replacing the original.
+  check(
+    "both store tools ask replace-or-copy before editing",
+    /ASK FIRST/.test(add) && /ASK FIRST/.test(build) && /separate copy/.test(add) && /separate copy/.test(build),
+    `${add.length}/${build.length} chars`,
+  );
+  check("the contract names the safe replace order", /modified model first/i.test(add) && /delete_3dmodel/.test(add));
+  check(
+    "delete_3dmodel calls itself the second half of a replace",
+    /second half of a replace/.test(byName.delete_3dmodel?.description ?? ""),
   );
 }
 
