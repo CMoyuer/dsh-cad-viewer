@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-09-18
 
 ### Added
 
@@ -87,6 +87,7 @@ First public release.
 - **A missing or broken CadQuery now explains itself.** Both helper scripts imported `vtkmodules` **unconditionally** as the first thing they did (a DLL-conflict workaround), so an environment with CadQuery but no VTK failed with an ImportError raised by our own import line — and a missing CadQuery died with a traceback that only reached the server log. The VTK import is now tolerant (it only helps when VTK is there; nine of the ten formats never need it), a failing `import cadquery` prints `{ok:false, error}` with the interpreter path *and* the install command (`pip install cadquery vtk` — vtk is required at import time even though cadquery 2.4 omits it from its dependency list), and the VTP writer says what to install instead of failing silently.
 - **VTP export is no longer empty.** CadQuery's exporter goes through the OCC/VTK bridge (`IVtkOCC_ShapeMesher`), which returns an empty polydata on Windows hosts — a 2 KB `.vtp` with 0 points. The bridge is still used when it produces something; otherwise the triangles are written with the same `vtkXMLPolyDataWriter` CadQuery itself uses (mesh entries from the stored mesh, script entries from the tessellated shape).
 
-[Unreleased]: https://github.com/CMoyuer/dsh-cad-viewer/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/CMoyuer/dsh-cad-viewer/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/CMoyuer/dsh-cad-viewer/releases/tag/v0.2.0
 [0.1.1]: https://github.com/CMoyuer/dsh-cad-viewer/releases/tag/v0.1.1
 [0.1.0]: https://github.com/CMoyuer/dsh-cad-viewer/releases/tag/v0.1.0
